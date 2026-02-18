@@ -4,14 +4,14 @@ version = "0.1.0"
 description = "macOS terminal app for the InMovement Unsit treadmill. Captures walking sessions via BLE, tracks steps/distance/calories in real-time, and syncs to Apple Health."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = { text = "Apache-2.0" }
 authors = [{ name = "W. Jonas Reger" }]
 keywords = ["treadmill", "ble", "bluetooth", "healthkit", "fitness", "walking"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: End Users/Desktop",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Operating System :: MacOS",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
