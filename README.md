@@ -34,9 +34,13 @@ The official InMovement app has connection issues, inaccurate data, and limited 
 ### Install
 
 ```bash
+# One-liner (install directly from GitHub)
+pip install git+https://github.com/wjonasreger/openwalk.git
+
+# Or clone and install locally
 git clone https://github.com/wjonasreger/openwalk.git
 cd openwalk
-uv sync        # or: pip install .
+pip install .
 ```
 
 ### Bluetooth Permissions
