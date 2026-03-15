@@ -154,9 +154,7 @@ def export(session_id: int | None, export_all: bool, fmt: str, output: str | Non
     asyncio.run(_export(session_id, export_all, fmt, output))
 
 
-async def _export(
-    session_id: int | None, export_all: bool, fmt: str, output: str | None
-) -> None:
+async def _export(session_id: int | None, export_all: bool, fmt: str, output: str | None) -> None:
     from openwalk.storage.database import Database
     from openwalk.storage.samples import SampleManager
     from openwalk.storage.sessions import SessionManager
@@ -183,10 +181,12 @@ async def _export(
         export_data: list[dict[str, Any]] = []
         for s in sessions:
             samples = await sample_mgr.get_samples(s.id)
-            export_data.append({
-                "session": asdict(s),
-                "samples": [asdict(sample) for sample in samples],
-            })
+            export_data.append(
+                {
+                    "session": asdict(s),
+                    "samples": [asdict(sample) for sample in samples],
+                }
+            )
 
     # Write output
     out: IO[str] = open(output, "w") if output else sys.stdout  # noqa: SIM115
@@ -214,162 +214,36 @@ def _write_csv(export_data: list[dict[str, Any]], out_file: IO[str]) -> None:
 
         # Session header
         writer.writerow(["# Session", session["id"]])
-        writer.writerow([
-            "# started_at", session["started_at"],
-            "ended_at", session.get("ended_at", ""),
-            "total_steps", session.get("total_steps", ""),
-            "distance_miles", session.get("distance_miles", ""),
-            "calories", session.get("calories", ""),
-        ])
+        writer.writerow(
+            [
+                "# started_at",
+                session["started_at"],
+                "ended_at",
+                session.get("ended_at", ""),
+                "total_steps",
+                session.get("total_steps", ""),
+                "distance_miles",
+                session.get("distance_miles", ""),
+                "calories",
+                session.get("calories", ""),
+            ]
+        )
 
         # Sample rows
         if samples:
             sample_fields = [
-                "captured_at", "steps", "distance_raw", "speed", "belt_state", "raw_hex",
+                "captured_at",
+                "steps",
+                "distance_raw",
+                "speed",
+                "belt_state",
+                "raw_hex",
             ]
             writer.writerow(sample_fields)
             for sample in samples:
                 writer.writerow([sample.get(f, "") for f in sample_fields])
 
         writer.writerow([])  # blank line between sessions
-
-
-# ---------------------------------------------------------------------------
-# sync
-# ---------------------------------------------------------------------------
-
-
-@cli.command()
-@click.option("--session", "-s", type=int, default=None, help="Sync a specific session ID")
-@click.option("--retry", is_flag=True, help="Retry only failed syncs")
-@click.option("--status", "show_status", is_flag=True, help="Show sync status of all sessions")
-def sync(session: int | None, retry: bool, show_status: bool) -> None:
-    """Sync walking sessions to Apple Health."""
-    asyncio.run(_sync(session, retry, show_status))
-
-
-async def _sync(session_id: int | None, retry: bool, show_status: bool) -> None:
-    from openwalk.config import config_to_profile
-    from openwalk.storage.chunks import ChunkManager
-    from openwalk.storage.database import Database
-    from openwalk.storage.samples import SampleManager
-    from openwalk.storage.sessions import SessionManager, SessionRow, SessionState
-    from openwalk.sync.healthkit_bridge import HealthKitBridge
-    from openwalk.sync.sync_manager import SyncManager
-
-    console = Console()
-
-    async with Database() as db:
-        session_mgr = SessionManager(db)
-        sample_mgr = SampleManager(db)
-        chunk_mgr = ChunkManager(db)
-
-        # --status: show sync status table
-        if show_status:
-            sessions = await session_mgr.get_recent_sessions(limit=50)
-            if not sessions:
-                console.print("[dim]No sessions recorded yet.[/dim]")
-                return
-
-            table = Table(title="Session Sync Status")
-            table.add_column("ID", style="dim", justify="right")
-            table.add_column("Date", style="cyan")
-            table.add_column("Steps", justify="right")
-            table.add_column("Sync State")
-            table.add_column("Error", style="dim")
-
-            for s in sessions:
-                date_str = s.started_at[:16] if s.started_at else "—"
-                state = s.sync_state
-                style = {
-                    "SYNCED": "green",
-                    "SYNC_FAILED": "red",
-                    "SYNC_PENDING": "yellow",
-                    "COMPLETED": "white",
-                    "RECORDING": "cyan",
-                }.get(state, "")
-                error = (s.sync_last_error or "")[:50]
-                table.add_row(
-                    str(s.id),
-                    date_str,
-                    f"{s.total_steps or 0:,}",
-                    f"[{style}]{state}[/{style}]",
-                    error,
-                )
-
-            console.print(table)
-            return
-
-        # Check bridge availability
-        cfg = load_config()
-        bridge_path = cfg.get("healthkit", {}).get("bridge_path", "")
-        bridge = HealthKitBridge(binary_path=bridge_path or None)
-
-        if not bridge.available:
-            console.print(
-                "[red]HealthKit bridge not found.[/red]\n"
-                "[dim]To install:[/dim]\n"
-                "  cd openwalk-health-bridge && swift build -c release\n"
-                "  cp .build/release/openwalk-health-bridge /usr/local/bin/"
-            )
-            return
-
-        profile = config_to_profile(cfg)
-
-        # Determine sessions to sync
-        sessions_to_sync: list[SessionRow] = []
-        if session_id is not None:
-            found = await session_mgr.get_session(session_id)
-            if found is None:
-                console.print(f"[red]Session {session_id} not found.[/red]")
-                return
-            sessions_to_sync = [found]
-        elif retry:
-            sessions_to_sync = await session_mgr.get_sessions_by_state(
-                SessionState.SYNC_FAILED
-            )
-        else:
-            completed = await session_mgr.get_sessions_by_state(SessionState.COMPLETED)
-            failed_sessions = await session_mgr.get_sessions_by_state(
-                SessionState.SYNC_FAILED
-            )
-            sessions_to_sync = completed + failed_sessions
-
-        if not sessions_to_sync:
-            console.print("[dim]No sessions to sync.[/dim]")
-            return
-
-        console.print(f"Syncing {len(sessions_to_sync)} session(s)...\n")
-
-        synced_count = 0
-        failed_count = 0
-        skipped_count = 0
-
-        for s in sessions_to_sync:
-            sync_mgr = SyncManager(
-                session_mgr=session_mgr,
-                chunk_mgr=chunk_mgr,
-                bridge=bridge,
-                sample_mgr=sample_mgr,
-                profile=profile,
-            )
-            result = await sync_mgr.sync_existing_session(s.id)
-
-            if result == "synced":
-                console.print(f"  [green]✓[/green] Session {s.id}: synced")
-                synced_count += 1
-            elif result == "skipped":
-                console.print(f"  [dim]–[/dim] Session {s.id}: already synced")
-                skipped_count += 1
-            else:
-                error = sync_mgr.sync_error or "unknown error"
-                console.print(f"  [red]✗[/red] Session {s.id}: {error}")
-                failed_count += 1
-
-        console.print(
-            f"\n[bold]Done:[/bold] {synced_count} synced,"
-            f" {failed_count} failed, {skipped_count} skipped"
-        )
 
 
 # ---------------------------------------------------------------------------

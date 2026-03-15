@@ -1,6 +1,6 @@
 """Tests for the OpenWalk SQLite storage layer."""
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import pytest
 
@@ -94,7 +94,6 @@ class TestDatabaseInit:
         names = [r["name"] for r in rows]
         assert "sessions" in names
         assert "samples" in names
-        assert "sync_chunks" in names
         assert "error_log" in names
 
     async def test_indexes_created(self, db: Database) -> None:
@@ -102,11 +101,9 @@ class TestDatabaseInit:
             "SELECT name FROM sqlite_master WHERE type='index' AND name LIKE 'idx_%'"
         )
         index_names = {r["name"] for r in rows}
-        assert "idx_sessions_sync_state" in index_names
         assert "idx_sessions_started_at" in index_names
         assert "idx_samples_session_id" in index_names
         assert "idx_samples_captured_at" in index_names
-        assert "idx_sync_chunks_pending" in index_names
         assert "idx_error_log_session_id" in index_names
 
     async def test_migration_is_idempotent(self, db: Database) -> None:
@@ -133,7 +130,7 @@ class TestSessionCRUD:
 
         session = await sessions.get_session(session_id)
         assert session is not None
-        assert session.sync_state == SessionState.RECORDING.value
+        assert session.state == SessionState.RECORDING.value
         assert session.total_steps is None
         assert session.ended_at is None
 
@@ -211,7 +208,7 @@ class TestSessionFinalization:
 
         session = await sessions.get_session(session_id)
         assert session is not None
-        assert session.sync_state == SessionState.COMPLETED.value
+        assert session.state == SessionState.COMPLETED.value
         assert session.ended_at is not None
         assert session.total_steps == 100
         assert session.distance_raw == 250
@@ -244,99 +241,25 @@ class TestSessionStateMachine:
 
         session = await sessions.get_session(session_id)
         assert session is not None
-        assert session.sync_state == SessionState.COMPLETED.value
+        assert session.state == SessionState.COMPLETED.value
 
-    async def test_completed_to_sync_pending(
+    async def test_completed_is_terminal(
         self, sessions: SessionManager, samples: SampleManager
     ) -> None:
         session_id = await sessions.create_session()
         await samples.insert_sample(session_id, make_data_message())
         await sessions.finalize_session(session_id)
 
-        await sessions.transition_state(session_id, SessionState.SYNC_PENDING)
-
-        session = await sessions.get_session(session_id)
-        assert session is not None
-        assert session.sync_state == SessionState.SYNC_PENDING.value
-        assert session.sync_attempts == 1
-        assert session.sync_last_attempt_at is not None
-
-    async def test_sync_pending_to_synced(
-        self, sessions: SessionManager, samples: SampleManager
-    ) -> None:
-        session_id = await sessions.create_session()
-        await samples.insert_sample(session_id, make_data_message())
-        await sessions.finalize_session(session_id)
-        await sessions.transition_state(session_id, SessionState.SYNC_PENDING)
-
-        await sessions.transition_state(
-            session_id, SessionState.SYNCED, hk_workout_uuid="test-uuid-123"
-        )
-
-        session = await sessions.get_session(session_id)
-        assert session is not None
-        assert session.sync_state == SessionState.SYNCED.value
-        assert session.hk_workout_uuid == "test-uuid-123"
-        assert session.sync_completed_at is not None
-
-    async def test_sync_pending_to_failed(
-        self, sessions: SessionManager, samples: SampleManager
-    ) -> None:
-        session_id = await sessions.create_session()
-        await samples.insert_sample(session_id, make_data_message())
-        await sessions.finalize_session(session_id)
-        await sessions.transition_state(session_id, SessionState.SYNC_PENDING)
-
-        await sessions.transition_state(
-            session_id, SessionState.SYNC_FAILED, error="HealthKit unavailable"
-        )
-
-        session = await sessions.get_session(session_id)
-        assert session is not None
-        assert session.sync_state == SessionState.SYNC_FAILED.value
-        assert session.sync_last_error == "HealthKit unavailable"
-
-    async def test_sync_failed_to_pending_retry(
-        self, sessions: SessionManager, samples: SampleManager
-    ) -> None:
-        session_id = await sessions.create_session()
-        await samples.insert_sample(session_id, make_data_message())
-        await sessions.finalize_session(session_id)
-        await sessions.transition_state(session_id, SessionState.SYNC_PENDING)
-        await sessions.transition_state(session_id, SessionState.SYNC_FAILED, error="timeout")
-
-        await sessions.transition_state(session_id, SessionState.SYNC_PENDING)
-
-        session = await sessions.get_session(session_id)
-        assert session is not None
-        assert session.sync_state == SessionState.SYNC_PENDING.value
-        assert session.sync_attempts == 2  # Incremented on each SYNC_PENDING
+        with pytest.raises(ValueError, match="Invalid transition"):
+            await sessions.transition_state(session_id, SessionState.RECORDING)
 
     async def test_invalid_transition_raises(self, sessions: SessionManager) -> None:
+        """RECORDING can only transition to COMPLETED via finalize."""
         session_id = await sessions.create_session()
 
+        # Only COMPLETED is valid from RECORDING, but RECORDING is not COMPLETED
         with pytest.raises(ValueError, match="Invalid transition"):
-            await sessions.transition_state(session_id, SessionState.SYNCED)
-
-    async def test_invalid_transition_recording_to_sync_pending(
-        self, sessions: SessionManager
-    ) -> None:
-        session_id = await sessions.create_session()
-
-        with pytest.raises(ValueError, match="Invalid transition"):
-            await sessions.transition_state(session_id, SessionState.SYNC_PENDING)
-
-    async def test_synced_is_terminal(
-        self, sessions: SessionManager, samples: SampleManager
-    ) -> None:
-        session_id = await sessions.create_session()
-        await samples.insert_sample(session_id, make_data_message())
-        await sessions.finalize_session(session_id)
-        await sessions.transition_state(session_id, SessionState.SYNC_PENDING)
-        await sessions.transition_state(session_id, SessionState.SYNCED)
-
-        with pytest.raises(ValueError, match="Invalid transition"):
-            await sessions.transition_state(session_id, SessionState.SYNC_PENDING)
+            await sessions.transition_state(session_id, SessionState.RECORDING)
 
     async def test_transition_nonexistent_session(self, sessions: SessionManager) -> None:
         with pytest.raises(ValueError, match="not found"):
@@ -363,7 +286,7 @@ class TestSessionRecovery:
 
         session = await sessions.get_session(session_id)
         assert session is not None
-        assert session.sync_state == SessionState.COMPLETED.value
+        assert session.state == SessionState.COMPLETED.value
         assert session.total_steps == 75
 
     async def test_recover_deletes_empty(self, sessions: SessionManager) -> None:
@@ -525,55 +448,3 @@ class TestErrorLogging:
         row = await db.fetchone("SELECT * FROM error_log WHERE session_id = ?", (session_id,))
         assert row is not None
         assert "DATA_12" in row["error_message"]
-
-
-# ---------------------------------------------------------------------------
-# Stale SYNC_PENDING recovery tests
-# ---------------------------------------------------------------------------
-
-
-class TestRecoverStaleSyncPending:
-    """Test recovery for sessions stuck in SYNC_PENDING state."""
-
-    async def test_recovers_stale_session(
-        self, sessions: SessionManager, samples: SampleManager
-    ) -> None:
-        session_id = await sessions.create_session()
-        await samples.insert_sample(session_id, make_data_message())
-        await sessions.finalize_session(session_id)
-        await sessions.transition_state(session_id, SessionState.SYNC_PENDING)
-
-        # Manually backdate the sync attempt to 2 hours ago
-        old_time = (datetime.now() - timedelta(hours=2)).isoformat()
-        await sessions.db.execute(
-            "UPDATE sessions SET sync_last_attempt_at = ? WHERE id = ?",
-            (old_time, session_id),
-        )
-
-        recovered = await sessions.recover_stale_sync_pending()
-        assert recovered == 1
-
-        session = await sessions.get_session(session_id)
-        assert session is not None
-        assert session.sync_state == SessionState.SYNC_FAILED.value
-        assert session.sync_last_error == "Sync timed out"
-
-    async def test_leaves_recent_alone(
-        self, sessions: SessionManager, samples: SampleManager
-    ) -> None:
-        session_id = await sessions.create_session()
-        await samples.insert_sample(session_id, make_data_message())
-        await sessions.finalize_session(session_id)
-        await sessions.transition_state(session_id, SessionState.SYNC_PENDING)
-
-        # sync_last_attempt_at was just set by transition_state, so it's recent
-        recovered = await sessions.recover_stale_sync_pending()
-        assert recovered == 0
-
-        session = await sessions.get_session(session_id)
-        assert session is not None
-        assert session.sync_state == SessionState.SYNC_PENDING.value
-
-    async def test_no_sync_pending(self, sessions: SessionManager) -> None:
-        recovered = await sessions.recover_stale_sync_pending()
-        assert recovered == 0

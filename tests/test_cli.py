@@ -1,4 +1,4 @@
-"""Tests for CLI commands: history, export, config, and sync."""
+"""Tests for CLI commands: history, export, and config."""
 
 import json
 
@@ -210,15 +210,6 @@ class TestCliRouting:
         assert "Export session data" in result.output
         assert "--format" in result.output
         assert "--output" in result.output
-
-    def test_sync_help(self):
-        runner = CliRunner()
-        result = runner.invoke(cli, ["sync", "--help"])
-        assert result.exit_code == 0
-        assert "Sync walking sessions" in result.output
-        assert "--session" in result.output
-        assert "--retry" in result.output
-        assert "--status" in result.output
 
     def test_config_show_help(self):
         runner = CliRunner()

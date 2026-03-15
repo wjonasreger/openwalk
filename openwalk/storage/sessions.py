@@ -1,12 +1,12 @@
 """Session CRUD operations and state machine for OpenWalk.
 
-Manages the session lifecycle: RECORDING → COMPLETED → SYNC_PENDING → SYNCED.
+Manages the session lifecycle: RECORDING → COMPLETED.
 Includes startup recovery for sessions interrupted by crashes.
 """
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
@@ -17,22 +17,16 @@ logger = logging.getLogger(__name__)
 
 
 class SessionState(Enum):
-    """Session sync state machine states."""
+    """Session lifecycle states."""
 
     RECORDING = "RECORDING"
     COMPLETED = "COMPLETED"
-    SYNC_PENDING = "SYNC_PENDING"
-    SYNC_FAILED = "SYNC_FAILED"
-    SYNCED = "SYNCED"
 
 
 # Valid state transitions: {current_state: [allowed_next_states]}
 _VALID_TRANSITIONS: dict[SessionState, list[SessionState]] = {
     SessionState.RECORDING: [SessionState.COMPLETED],
-    SessionState.COMPLETED: [SessionState.SYNC_PENDING],
-    SessionState.SYNC_PENDING: [SessionState.SYNCED, SessionState.SYNC_FAILED],
-    SessionState.SYNC_FAILED: [SessionState.SYNC_PENDING],
-    SessionState.SYNCED: [],  # Terminal state
+    SessionState.COMPLETED: [],  # Terminal state
 }
 
 
@@ -50,12 +44,7 @@ class SessionRow:
     calories: int | None
     max_speed: int | None
     avg_speed: float | None
-    sync_state: str
-    sync_attempts: int
-    sync_last_attempt_at: str | None
-    sync_last_error: str | None
-    sync_completed_at: str | None
-    hk_workout_uuid: str | None
+    state: str
     created_at: str
     updated_at: str
 
@@ -73,12 +62,7 @@ class SessionRow:
             calories=row["calories"],
             max_speed=row["max_speed"],
             avg_speed=row["avg_speed"],
-            sync_state=row["sync_state"],
-            sync_attempts=row["sync_attempts"],
-            sync_last_attempt_at=row["sync_last_attempt_at"],
-            sync_last_error=row["sync_last_error"],
-            sync_completed_at=row["sync_completed_at"],
-            hk_workout_uuid=row["hk_workout_uuid"],
+            state=row["state"],
             created_at=row["created_at"],
             updated_at=row["updated_at"],
         )
@@ -102,7 +86,7 @@ class SessionManager:
         """
         now = datetime.now().isoformat()
         cursor = await self.db.execute(
-            "INSERT INTO sessions (started_at, sync_state) VALUES (?, ?)",
+            "INSERT INTO sessions (started_at, state) VALUES (?, ?)",
             (now, SessionState.RECORDING.value),
         )
         session_id = cursor.lastrowid
@@ -122,7 +106,7 @@ class SessionManager:
     async def get_sessions_by_state(self, state: SessionState) -> list[SessionRow]:
         """Get all sessions in the given state."""
         rows = await self.db.fetchall(
-            "SELECT * FROM sessions WHERE sync_state = ? ORDER BY started_at DESC",
+            "SELECT * FROM sessions WHERE state = ? ORDER BY started_at DESC",
             (state.value,),
         )
         return [SessionRow.from_row(r) for r in rows]
@@ -213,7 +197,7 @@ class SessionManager:
                 calories = ?,
                 max_speed = ?,
                 avg_speed = ?,
-                sync_state = ?,
+                state = ?,
                 updated_at = datetime('now')
             WHERE id = ?
             """,
@@ -236,17 +220,12 @@ class SessionManager:
         self,
         session_id: int,
         new_state: SessionState,
-        *,
-        error: str | None = None,
-        hk_workout_uuid: str | None = None,
     ) -> None:
         """Transition a session to a new state, validating the transition.
 
         Args:
             session_id: Session to transition.
             new_state: Target state.
-            error: Error message (for SYNC_FAILED transitions).
-            hk_workout_uuid: HealthKit workout UUID (for SYNCED transitions).
 
         Raises:
             ValueError: If the transition is not valid.
@@ -255,7 +234,7 @@ class SessionManager:
         if session is None:
             raise ValueError(f"Session {session_id} not found")
 
-        current = SessionState(session.sync_state)
+        current = SessionState(session.state)
         allowed = _VALID_TRANSITIONS.get(current, [])
 
         if new_state not in allowed:
@@ -264,48 +243,14 @@ class SessionManager:
                 f"Allowed: {[s.value for s in allowed]}"
             )
 
-        now = datetime.now().isoformat()
-
-        if new_state == SessionState.SYNC_PENDING:
-            await self.db.execute(
-                """\
-                UPDATE sessions
-                SET sync_state = ?, sync_attempts = sync_attempts + 1,
-                    sync_last_attempt_at = ?, updated_at = datetime('now')
-                WHERE id = ?
-                """,
-                (new_state.value, now, session_id),
-            )
-        elif new_state == SessionState.SYNCED:
-            await self.db.execute(
-                """\
-                UPDATE sessions
-                SET sync_state = ?, sync_completed_at = ?,
-                    hk_workout_uuid = ?, sync_last_error = NULL,
-                    updated_at = datetime('now')
-                WHERE id = ?
-                """,
-                (new_state.value, now, hk_workout_uuid, session_id),
-            )
-        elif new_state == SessionState.SYNC_FAILED:
-            await self.db.execute(
-                """\
-                UPDATE sessions
-                SET sync_state = ?, sync_last_error = ?,
-                    sync_last_attempt_at = ?, updated_at = datetime('now')
-                WHERE id = ?
-                """,
-                (new_state.value, error, now, session_id),
-            )
-        else:
-            await self.db.execute(
-                """\
-                UPDATE sessions
-                SET sync_state = ?, updated_at = datetime('now')
-                WHERE id = ?
-                """,
-                (new_state.value, session_id),
-            )
+        await self.db.execute(
+            """\
+            UPDATE sessions
+            SET state = ?, updated_at = datetime('now')
+            WHERE id = ?
+            """,
+            (new_state.value, session_id),
+        )
 
         logger.info("Session %d: %s → %s", session_id, current.value, new_state.value)
 
@@ -335,43 +280,5 @@ class SessionManager:
             else:
                 await self.db.execute("DELETE FROM sessions WHERE id = ?", (session.id,))
                 logger.info("Discarded empty interrupted session %d", session.id)
-
-        return recovered
-
-    async def recover_stale_sync_pending(self, max_age_hours: int = 1) -> int:
-        """Move SYNC_PENDING sessions older than max_age_hours to SYNC_FAILED.
-
-        Called on startup to recover sessions stuck in SYNC_PENDING state
-        (e.g., if the app crashed mid-sync).
-
-        Args:
-            max_age_hours: Maximum age in hours before a SYNC_PENDING session
-                is considered stale.
-
-        Returns:
-            Number of sessions recovered.
-        """
-        pending = await self.get_sessions_by_state(SessionState.SYNC_PENDING)
-        cutoff = (datetime.now() - timedelta(hours=max_age_hours)).isoformat()
-        recovered = 0
-
-        for session in pending:
-            attempt_at = session.sync_last_attempt_at
-            if attempt_at is not None and attempt_at < cutoff:
-                await self.db.execute(
-                    """\
-                    UPDATE sessions
-                    SET sync_state = ?, sync_last_error = ?,
-                        updated_at = datetime('now')
-                    WHERE id = ?
-                    """,
-                    (SessionState.SYNC_FAILED.value, "Sync timed out", session.id),
-                )
-                logger.warning(
-                    "Recovered stale SYNC_PENDING session %d (last attempt: %s)",
-                    session.id,
-                    attempt_at,
-                )
-                recovered += 1
 
         return recovered

@@ -9,7 +9,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from openwalk.ble.connection import ConnectionState
 from openwalk.protocol.counters import SessionCounters
@@ -19,9 +19,6 @@ from openwalk.session.calories import UserProfile
 from openwalk.session.state import LiveSessionState
 from openwalk.storage.samples import SampleManager
 from openwalk.storage.sessions import SessionManager
-
-if TYPE_CHECKING:
-    from openwalk.sync.sync_manager import SyncManager
 
 logger = logging.getLogger(__name__)
 
@@ -47,13 +44,11 @@ class SessionOrchestrator:
         sample_mgr: SampleManager,
         profile: UserProfile,
         inactivity_timeout: float = DEFAULT_INACTIVITY_TIMEOUT,
-        sync_manager: SyncManager | None = None,
     ) -> None:
         self._session_mgr = session_mgr
         self._sample_mgr = sample_mgr
         self._profile = profile
         self._inactivity_timeout = inactivity_timeout
-        self._sync_manager = sync_manager
 
         self._counters = SessionCounters()
         self._state = LiveSessionState()
@@ -181,12 +176,6 @@ class SessionOrchestrator:
         self._state.started_at = started_at
         logger.info("Session %d started", session_id)
 
-        if self._sync_manager is not None:
-            try:
-                await self._sync_manager.start_session_sync(session_id, started_at)
-            except Exception:
-                logger.exception("Failed to start HealthKit sync for session %d", session_id)
-
     async def _do_end_session(self) -> None:
         """Finalize the current DB session."""
         session_id = self._state.session_id
@@ -206,12 +195,6 @@ class SessionOrchestrator:
         )
         await self._session_mgr.finalize_session(session_id)
         logger.info("Session %d ended", session_id)
-
-        if self._sync_manager is not None:
-            try:
-                await self._sync_manager.end_session_sync(session_id)
-            except Exception:
-                logger.exception("Failed to end HealthKit sync for session %d", session_id)
 
         self._state.session_id = None
 

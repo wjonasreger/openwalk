@@ -21,11 +21,6 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "age_years": 29,
         "gender": "male",
     },
-    "healthkit": {
-        "enabled": True,
-        "bridge_path": "",
-        "sync_interval": 60,
-    },
 }
 
 # TOML template for config init (tomllib is read-only, so we write manually)
@@ -38,14 +33,6 @@ weight_lbs = {weight_lbs}
 height_inches = {height_inches}
 age_years = {age_years}
 gender = "{gender}"
-
-[healthkit]
-# Enable HealthKit sync (requires openwalk-health-bridge binary)
-enabled = {hk_enabled}
-# Path to bridge binary (empty = auto-discover from PATH)
-bridge_path = "{hk_bridge_path}"
-# Sync interval in seconds
-sync_interval = {hk_sync_interval}
 """
 
 
@@ -54,9 +41,7 @@ def load_config(path: Path = CONFIG_PATH) -> dict[str, Any]:
 
     Returns defaults if file doesn't exist or is invalid.
     """
-    config: dict[str, Any] = {
-        section: dict(values) for section, values in DEFAULT_CONFIG.items()
-    }
+    config: dict[str, Any] = {section: dict(values) for section, values in DEFAULT_CONFIG.items()}
 
     if path.exists():
         try:
@@ -78,15 +63,11 @@ def save_config(config: dict[str, Any], path: Path = CONFIG_PATH) -> None:
     """Save config to TOML file."""
     path.parent.mkdir(parents=True, exist_ok=True)
     user = config.get("user", DEFAULT_CONFIG["user"])
-    hk = config.get("healthkit", DEFAULT_CONFIG["healthkit"])
     content = _CONFIG_TEMPLATE.format(
         weight_lbs=user["weight_lbs"],
         height_inches=user["height_inches"],
         age_years=user["age_years"],
         gender=user["gender"],
-        hk_enabled=str(hk.get("enabled", True)).lower(),
-        hk_bridge_path=hk.get("bridge_path", ""),
-        hk_sync_interval=hk.get("sync_interval", 60),
     )
     path.write_text(content)
 
