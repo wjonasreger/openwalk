@@ -51,7 +51,7 @@ MSG_TYPE_SPEED = 0x11
 # Expected Message Sizes (total bytes including frame markers)
 # =============================================================================
 
-MSG_SIZE_IDLE = 7   # [5B] [04] [03] [b3] [b4] [b5] [5D]
+MSG_SIZE_IDLE = 7  # [5B] [04] [03] [b3] [b4] [b5] [5D]
 MSG_SIZE_SPEED = 5  # [5B] [02] [11] [speed] [5D]
 MSG_SIZE_DATA = 16  # [5B] [0D] [05] ... 13 bytes payload ... [5D]
 
@@ -60,29 +60,29 @@ MSG_SIZE_DATA = 16  # [5B] [0D] [05] ... 13 bytes payload ... [5D]
 # =============================================================================
 
 FRAME_START = 0x5B  # ASCII '['
-FRAME_END = 0x5D    # ASCII ']'
+FRAME_END = 0x5D  # ASCII ']'
 
 # =============================================================================
 # DATA Message Byte Positions
 # =============================================================================
 
 # Byte positions within a 16-byte DATA frame
-DATA_BYTE_START = 0       # 0x5B
-DATA_BYTE_LENGTH = 1      # 0x0D (13)
-DATA_BYTE_TYPE = 2        # 0x05
-DATA_BYTE_FLAG = 3        # 0-4, cycles during session
-DATA_BYTE_STEPS = 4       # uint8, wraps at 255
-DATA_BYTE_RESERVED1 = 5   # always 0x00
-DATA_BYTE_DIST_LO = 6     # uint16 LE low byte
-DATA_BYTE_DIST_HI = 7     # uint16 LE high byte
-DATA_BYTE_BELT_REVS = 8   # uint8, wraps at 255
-DATA_BYTE_RESERVED2 = 9   # always 0x00
-DATA_BYTE_MOTOR_LO = 10   # uint16 LE low byte
-DATA_BYTE_MOTOR_HI = 11   # uint16 LE high byte
-DATA_BYTE_SPEED = 12      # 1-20 setting
-DATA_BYTE_BELT_STATE = 13 # 1 = running
-DATA_BYTE_PADDING = 14    # always 0x00
-DATA_BYTE_END = 15        # 0x5D
+DATA_BYTE_START = 0  # 0x5B
+DATA_BYTE_LENGTH = 1  # 0x0D (13)
+DATA_BYTE_TYPE = 2  # 0x05
+DATA_BYTE_FLAG = 3  # 0-4, cycles during session
+DATA_BYTE_STEPS = 4  # uint8, wraps at 255
+DATA_BYTE_RESERVED1 = 5  # always 0x00
+DATA_BYTE_DIST_LO = 6  # uint16 LE low byte
+DATA_BYTE_DIST_HI = 7  # uint16 LE high byte
+DATA_BYTE_BELT_REVS = 8  # uint8, wraps at 255
+DATA_BYTE_RESERVED2 = 9  # always 0x00
+DATA_BYTE_MOTOR_LO = 10  # uint16 LE low byte
+DATA_BYTE_MOTOR_HI = 11  # uint16 LE high byte
+DATA_BYTE_SPEED = 12  # 1-20 setting
+DATA_BYTE_BELT_STATE = 13  # 1 = running
+DATA_BYTE_PADDING = 14  # always 0x00
+DATA_BYTE_END = 15  # 0x5D
 
 # =============================================================================
 # Field Ranges and Limits
