@@ -616,3 +616,181 @@ class TestSyncManager:
 
         cal = mgr._compute_calorie_delta([], start, end)
         assert cal == 0
+
+    async def test_sync_error_property_default(self, profile: UserProfile) -> None:
+        mock_bridge = MagicMock()
+        mgr = SyncManager(
+            session_mgr=MagicMock(),
+            chunk_mgr=MagicMock(),
+            bridge=mock_bridge,
+            sample_mgr=MagicMock(),
+            profile=profile,
+        )
+        assert mgr.sync_error is None
+
+
+# ---------------------------------------------------------------------------
+# sync_existing_session tests
+# ---------------------------------------------------------------------------
+
+
+class TestSyncExistingSession:
+
+    async def test_sync_completed_session(
+        self,
+        sessions: SessionManager,
+        chunks: ChunkManager,
+        samples: SampleManager,
+        profile: UserProfile,
+    ) -> None:
+        """COMPLETED session: creates chunks, syncs workout, returns 'synced'."""
+        session_id = await sessions.create_session()
+        msg = make_data_message()
+        await samples.insert_sample(session_id, msg, cumulative_steps=42)
+        await sessions.finalize_session(session_id)
+
+        mock_bridge = AsyncMock()
+        mock_bridge.available = True
+        mock_bridge.write_chunk = AsyncMock(
+            return_value=ChunkResult(
+                steps_uuid="s", distance_uuid="d", calories_uuid="c", was_existing=False
+            )
+        )
+        mock_bridge.write_workout = AsyncMock(
+            return_value=WorkoutResult(workout_uuid="w-uuid", was_existing=False)
+        )
+
+        mgr = SyncManager(
+            session_mgr=sessions,
+            chunk_mgr=chunks,
+            bridge=mock_bridge,
+            sample_mgr=samples,
+            profile=profile,
+        )
+
+        result = await mgr.sync_existing_session(session_id)
+        assert result == "synced"
+
+        session = await sessions.get_session(session_id)
+        assert session is not None
+        assert session.sync_state == SessionState.SYNCED.value
+
+    async def test_sync_already_synced_returns_skipped(
+        self,
+        sessions: SessionManager,
+        chunks: ChunkManager,
+        samples: SampleManager,
+        profile: UserProfile,
+    ) -> None:
+        """SYNCED session returns 'skipped'."""
+        session_id = await sessions.create_session()
+        msg = make_data_message()
+        await samples.insert_sample(session_id, msg, cumulative_steps=42)
+        await sessions.finalize_session(session_id)
+
+        # Manually move to SYNCED
+        await sessions.transition_state(session_id, SessionState.SYNC_PENDING)
+        await sessions.transition_state(
+            session_id, SessionState.SYNCED, hk_workout_uuid="existing"
+        )
+
+        mock_bridge = AsyncMock()
+        mock_bridge.available = True
+
+        mgr = SyncManager(
+            session_mgr=sessions,
+            chunk_mgr=chunks,
+            bridge=mock_bridge,
+            sample_mgr=samples,
+            profile=profile,
+        )
+
+        result = await mgr.sync_existing_session(session_id)
+        assert result == "skipped"
+
+    async def test_sync_recording_returns_failed(
+        self,
+        sessions: SessionManager,
+        chunks: ChunkManager,
+        samples: SampleManager,
+        profile: UserProfile,
+    ) -> None:
+        """RECORDING session returns 'failed'."""
+        session_id = await sessions.create_session()
+
+        mock_bridge = AsyncMock()
+        mock_bridge.available = True
+
+        mgr = SyncManager(
+            session_mgr=sessions,
+            chunk_mgr=chunks,
+            bridge=mock_bridge,
+            sample_mgr=samples,
+            profile=profile,
+        )
+
+        result = await mgr.sync_existing_session(session_id)
+        assert result == "failed"
+
+    async def test_sync_nonexistent_session(
+        self,
+        sessions: SessionManager,
+        chunks: ChunkManager,
+        samples: SampleManager,
+        profile: UserProfile,
+    ) -> None:
+        """Nonexistent session returns 'failed'."""
+        mock_bridge = AsyncMock()
+        mock_bridge.available = True
+
+        mgr = SyncManager(
+            session_mgr=sessions,
+            chunk_mgr=chunks,
+            bridge=mock_bridge,
+            sample_mgr=samples,
+            profile=profile,
+        )
+
+        result = await mgr.sync_existing_session(9999)
+        assert result == "failed"
+
+    async def test_sync_failed_session_retry(
+        self,
+        sessions: SessionManager,
+        chunks: ChunkManager,
+        samples: SampleManager,
+        profile: UserProfile,
+    ) -> None:
+        """SYNC_FAILED session retries and syncs workout."""
+        session_id = await sessions.create_session()
+        msg = make_data_message()
+        await samples.insert_sample(session_id, msg, cumulative_steps=42)
+        await sessions.finalize_session(session_id)
+
+        # Move to SYNC_FAILED
+        await sessions.transition_state(session_id, SessionState.SYNC_PENDING)
+        await sessions.transition_state(
+            session_id, SessionState.SYNC_FAILED, error="previous failure"
+        )
+
+        mock_bridge = AsyncMock()
+        mock_bridge.available = True
+        mock_bridge.write_chunk = AsyncMock(
+            return_value=ChunkResult(
+                steps_uuid="s", distance_uuid="d", calories_uuid="c", was_existing=False
+            )
+        )
+        mock_bridge.write_workout = AsyncMock(
+            return_value=WorkoutResult(workout_uuid="w-retry", was_existing=False)
+        )
+
+        mgr = SyncManager(
+            session_mgr=sessions,
+            chunk_mgr=chunks,
+            bridge=mock_bridge,
+            sample_mgr=samples,
+            profile=profile,
+        )
+
+        result = await mgr.sync_existing_session(session_id)
+        assert result == "synced"

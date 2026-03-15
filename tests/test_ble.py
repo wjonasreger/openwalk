@@ -1,9 +1,6 @@
 """Tests for BLE connection manager components."""
 
-import json
 import time
-from datetime import datetime, timedelta
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -14,7 +11,7 @@ from openwalk.ble.connection import (
     ReconnectStrategy,
 )
 from openwalk.ble.notifications import MessageRateTracker, NotificationRouter
-from openwalk.ble.scanner import CACHE_FILE, load_device_uuid, save_device_uuid
+from openwalk.ble.scanner import load_device_uuid, save_device_uuid
 
 # =============================================================================
 # ReconnectStrategy

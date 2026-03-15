@@ -6,7 +6,7 @@ Includes startup recovery for sessions interrupted by crashes.
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
@@ -335,5 +335,43 @@ class SessionManager:
             else:
                 await self.db.execute("DELETE FROM sessions WHERE id = ?", (session.id,))
                 logger.info("Discarded empty interrupted session %d", session.id)
+
+        return recovered
+
+    async def recover_stale_sync_pending(self, max_age_hours: int = 1) -> int:
+        """Move SYNC_PENDING sessions older than max_age_hours to SYNC_FAILED.
+
+        Called on startup to recover sessions stuck in SYNC_PENDING state
+        (e.g., if the app crashed mid-sync).
+
+        Args:
+            max_age_hours: Maximum age in hours before a SYNC_PENDING session
+                is considered stale.
+
+        Returns:
+            Number of sessions recovered.
+        """
+        pending = await self.get_sessions_by_state(SessionState.SYNC_PENDING)
+        cutoff = (datetime.now() - timedelta(hours=max_age_hours)).isoformat()
+        recovered = 0
+
+        for session in pending:
+            attempt_at = session.sync_last_attempt_at
+            if attempt_at is not None and attempt_at < cutoff:
+                await self.db.execute(
+                    """\
+                    UPDATE sessions
+                    SET sync_state = ?, sync_last_error = ?,
+                        updated_at = datetime('now')
+                    WHERE id = ?
+                    """,
+                    (SessionState.SYNC_FAILED.value, "Sync timed out", session.id),
+                )
+                logger.warning(
+                    "Recovered stale SYNC_PENDING session %d (last attempt: %s)",
+                    session.id,
+                    attempt_at,
+                )
+                recovered += 1
 
         return recovered

@@ -8,7 +8,6 @@ Three message types:
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Union
 
 
 @dataclass(frozen=True)
@@ -123,7 +122,7 @@ class TruncatedFrame:
 
 
 # Union type for all valid message types
-Message = Union[IdleMessage, SpeedMessage, DataMessage]
+Message = IdleMessage | SpeedMessage | DataMessage
 
 # Union type including truncated frames
-AnyFrame = Union[IdleMessage, SpeedMessage, DataMessage, TruncatedFrame]
+AnyFrame = IdleMessage | SpeedMessage | DataMessage | TruncatedFrame

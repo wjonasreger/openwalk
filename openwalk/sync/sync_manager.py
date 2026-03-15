@@ -80,11 +80,17 @@ class SyncManager:
         self._last_chunk_end: datetime | None = None
         self._sync_task: asyncio.Task[None] | None = None
         self._status: str = "off"
+        self._last_error: str | None = None
 
     @property
     def sync_status(self) -> str:
         """Current sync status for dashboard display."""
         return self._status
+
+    @property
+    def sync_error(self) -> str | None:
+        """Last sync error message, if any."""
+        return self._last_error
 
     async def start_session_sync(self, session_id: int, started_at: datetime) -> None:
         """Begin tracking chunks for a new session.
@@ -169,9 +175,10 @@ class SyncManager:
 
         except asyncio.CancelledError:
             return
-        except Exception:
+        except Exception as exc:
             logger.exception("Sync loop error")
             self._status = "error"
+            self._last_error = str(exc)
 
     async def _create_and_sync_chunk(
         self,
@@ -294,6 +301,7 @@ class SyncManager:
             await self._chunk_mgr.mark_failed(chunk_id, str(exc))
             logger.warning("Chunk %d sync failed (non-retryable): %s", chunk_id, exc)
             self._status = "error"
+            self._last_error = str(exc)
             return False
         except (BridgeNotFoundError, Exception) as exc:
             # Retryable errors
@@ -338,12 +346,16 @@ class SyncManager:
         if session is None:
             return
 
-        # Transition to SYNC_PENDING
-        try:
-            await self._session_mgr.transition_state(session_id, SessionState.SYNC_PENDING)
-        except ValueError:
-            logger.warning("Cannot transition session %d to SYNC_PENDING", session_id)
-            return
+        # Transition to SYNC_PENDING (skip if already in that state)
+        current_state = SessionState(session.sync_state)
+        if current_state != SessionState.SYNC_PENDING:
+            try:
+                await self._session_mgr.transition_state(
+                    session_id, SessionState.SYNC_PENDING
+                )
+            except ValueError:
+                logger.warning("Cannot transition session %d to SYNC_PENDING", session_id)
+                return
 
         workout_data = {
             "session_id": session_id,
@@ -369,10 +381,76 @@ class SyncManager:
                 session_id, SessionState.SYNC_FAILED, error=str(exc)
             )
             self._status = "error"
+            self._last_error = str(exc)
             logger.warning("Workout sync failed for session %d: %s", session_id, exc)
         except Exception as exc:
             await self._session_mgr.transition_state(
                 session_id, SessionState.SYNC_FAILED, error=str(exc)
             )
             self._status = "error"
+            self._last_error = str(exc)
             logger.warning("Workout sync failed for session %d: %s", session_id, exc)
+
+    async def sync_existing_session(self, session_id: int) -> str:
+        """Sync a completed or failed session to HealthKit (no background loop).
+
+        For COMPLETED sessions: creates chunks from samples, syncs them, writes workout.
+        For SYNC_FAILED sessions: retries failed chunks and re-attempts workout.
+        For SYNCED sessions: returns "skipped".
+
+        Args:
+            session_id: Session to sync.
+
+        Returns:
+            "synced", "failed", or "skipped".
+        """
+        session = await self._session_mgr.get_session(session_id)
+        if session is None:
+            return "failed"
+
+        state = SessionState(session.sync_state)
+
+        if state == SessionState.SYNCED:
+            return "skipped"
+
+        if state == SessionState.RECORDING:
+            logger.warning("Cannot sync session %d: still recording", session_id)
+            return "failed"
+
+        if state == SessionState.COMPLETED:
+            # Create chunks from all session samples
+            start = datetime.fromisoformat(session.started_at)
+            end_str = session.ended_at or datetime.now().isoformat()
+            end = datetime.fromisoformat(end_str)
+
+            # Build chunks covering the full session in sync_interval windows
+            chunk_start = start
+            chunk_index = 0
+            while chunk_start < end:
+                chunk_end = min(
+                    chunk_start + timedelta(seconds=self._sync_interval), end
+                )
+                await self._create_and_sync_chunk(
+                    session_id, chunk_index, chunk_start, chunk_end
+                )
+                chunk_index += 1
+                chunk_start = chunk_end
+
+        if state == SessionState.SYNC_FAILED:
+            # Transition back to SYNC_PENDING to re-attempt
+            with contextlib.suppress(ValueError):
+                await self._session_mgr.transition_state(
+                    session_id, SessionState.SYNC_PENDING
+                )
+
+        # Retry any failed chunks
+        await self._retry_failed_chunks(session_id)
+
+        # Write workout summary
+        await self._sync_workout(session_id)
+
+        # Check final state
+        updated = await self._session_mgr.get_session(session_id)
+        if updated and SessionState(updated.sync_state) == SessionState.SYNCED:
+            return "synced"
+        return "failed"

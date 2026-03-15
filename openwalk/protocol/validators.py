@@ -57,10 +57,7 @@ def is_valid_frame(frame: bytes) -> bool:
     length_byte = frame[1]
     actual_payload = len(frame) - 3
 
-    if length_byte != actual_payload:
-        return False
-
-    return True
+    return length_byte == actual_payload
 
 
 def is_truncated_data(frame: bytes) -> bool:
@@ -85,10 +82,7 @@ def is_truncated_data(frame: bytes) -> bool:
     type_byte = frame[2]
 
     # DATA type but wrong size = truncated
-    if type_byte == MSG_TYPE_DATA and len(frame) != MSG_SIZE_DATA:
-        return True
-
-    return False
+    return type_byte == MSG_TYPE_DATA and len(frame) != MSG_SIZE_DATA
 
 
 def get_truncation_variant(frame: bytes) -> str:

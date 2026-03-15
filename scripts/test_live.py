@@ -154,7 +154,10 @@ async def scan_for_treadmill() -> str | None:
         return device.address
     else:
         console.print(f"[red]Could not find {DEVICE_NAME}[/red]")
-        console.print("[yellow]Make sure the treadmill is powered on and no other device is connected.[/yellow]")
+        console.print(
+            "[yellow]Make sure the treadmill is powered on"
+            " and no other device is connected.[/yellow]"
+        )
         return None
 
 
@@ -179,7 +182,10 @@ async def run_live_test(duration: int) -> None:
 
         # Subscribe to notifications
         await client.start_notify(NOTIFY_CHAR_UUID, notification_handler)
-        console.print(f"[green]Subscribed to notifications. Running for {duration} seconds...[/green]")
+        console.print(
+            f"[green]Subscribed to notifications."
+            f" Running for {duration} seconds...[/green]"
+        )
         console.print("[yellow]Press Ctrl+C to stop early.[/yellow]\n")
 
         # Run with live display
@@ -221,11 +227,21 @@ async def run_live_test(duration: int) -> None:
     else:
         console.print("[cyan]ℹ No step counter wrap-around (walk longer to test)[/cyan]")
 
-    truncated_rate = (stats.truncated_count / stats.message_count * 100) if stats.message_count > 0 else 0
+    truncated_rate = (
+        (stats.truncated_count / stats.message_count * 100)
+        if stats.message_count > 0
+        else 0
+    )
     if truncated_rate < 2:
-        console.print(f"[green]✓ Truncated frame rate: {truncated_rate:.2f}% (expected <1%)[/green]")
+        console.print(
+            f"[green]✓ Truncated frame rate:"
+            f" {truncated_rate:.2f}% (expected <1%)[/green]"
+        )
     else:
-        console.print(f"[yellow]⚠ Truncated frame rate: {truncated_rate:.2f}% (higher than expected)[/yellow]")
+        console.print(
+            f"[yellow]⚠ Truncated frame rate:"
+            f" {truncated_rate:.2f}% (higher than expected)[/yellow]"
+        )
 
 
 @click.command()

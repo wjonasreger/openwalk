@@ -103,8 +103,9 @@ class HealthKitBridge:
     def _check_available(self) -> None:
         if not self.available:
             raise BridgeNotFoundError(
-                f"Swift bridge binary '{BINARY_NAME}' not found. "
-                "Build and install from openwalk-health-bridge/ directory."
+                f"HealthKit bridge '{BINARY_NAME}' not found. To install:\n"
+                "  cd openwalk-health-bridge && swift build -c release\n"
+                "  cp .build/release/openwalk-health-bridge /usr/local/bin/"
             )
 
     async def write_chunk(self, chunk_data: dict[str, object]) -> ChunkResult:
@@ -184,6 +185,17 @@ class HealthKitBridge:
             if returncode != 0:
                 error_msg = stderr.decode().strip() if stderr else f"Exit code {returncode}"
                 error_cls = _EXIT_CODE_ERRORS.get(returncode, WriteError)
+                # Add actionable hints to error messages
+                if error_cls is AuthError:
+                    error_msg += (
+                        "\nGrant HealthKit access in: "
+                        "System Settings > Privacy & Security > Health"
+                    )
+                elif error_cls is WriteError:
+                    error_msg += (
+                        "\nCheck that HealthKit permissions are still "
+                        "granted in System Settings."
+                    )
                 raise error_cls(error_msg)
 
             # Parse JSON response

@@ -1,6 +1,6 @@
 """Tests for the OpenWalk SQLite storage layer."""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
 
@@ -525,3 +525,55 @@ class TestErrorLogging:
         row = await db.fetchone("SELECT * FROM error_log WHERE session_id = ?", (session_id,))
         assert row is not None
         assert "DATA_12" in row["error_message"]
+
+
+# ---------------------------------------------------------------------------
+# Stale SYNC_PENDING recovery tests
+# ---------------------------------------------------------------------------
+
+
+class TestRecoverStaleSyncPending:
+    """Test recovery for sessions stuck in SYNC_PENDING state."""
+
+    async def test_recovers_stale_session(
+        self, sessions: SessionManager, samples: SampleManager
+    ) -> None:
+        session_id = await sessions.create_session()
+        await samples.insert_sample(session_id, make_data_message())
+        await sessions.finalize_session(session_id)
+        await sessions.transition_state(session_id, SessionState.SYNC_PENDING)
+
+        # Manually backdate the sync attempt to 2 hours ago
+        old_time = (datetime.now() - timedelta(hours=2)).isoformat()
+        await sessions.db.execute(
+            "UPDATE sessions SET sync_last_attempt_at = ? WHERE id = ?",
+            (old_time, session_id),
+        )
+
+        recovered = await sessions.recover_stale_sync_pending()
+        assert recovered == 1
+
+        session = await sessions.get_session(session_id)
+        assert session is not None
+        assert session.sync_state == SessionState.SYNC_FAILED.value
+        assert session.sync_last_error == "Sync timed out"
+
+    async def test_leaves_recent_alone(
+        self, sessions: SessionManager, samples: SampleManager
+    ) -> None:
+        session_id = await sessions.create_session()
+        await samples.insert_sample(session_id, make_data_message())
+        await sessions.finalize_session(session_id)
+        await sessions.transition_state(session_id, SessionState.SYNC_PENDING)
+
+        # sync_last_attempt_at was just set by transition_state, so it's recent
+        recovered = await sessions.recover_stale_sync_pending()
+        assert recovered == 0
+
+        session = await sessions.get_session(session_id)
+        assert session is not None
+        assert session.sync_state == SessionState.SYNC_PENDING.value
+
+    async def test_no_sync_pending(self, sessions: SessionManager) -> None:
+        recovered = await sessions.recover_stale_sync_pending()
+        assert recovered == 0

@@ -47,6 +47,7 @@ async def run_app(debug: bool = False) -> None:
 
         # Recover any interrupted sessions from a previous run
         await session_mgr.recover_interrupted()
+        await session_mgr.recover_stale_sync_pending()
 
         # Load config and create user profile
         config = load_config()
@@ -127,6 +128,7 @@ async def _display_loop(
         loop.add_signal_handler(sig, _handle_signal)
 
     sync_status = sync_manager.sync_status if sync_manager else None
+    sync_error = sync_manager.sync_error if sync_manager else None
 
     try:
         with Live(
@@ -136,6 +138,7 @@ async def _display_loop(
                 orchestrator.conn_message,
                 conn_mgr.router.total_notifications,
                 sync_status=sync_status,
+                sync_error=sync_error,
             ),
             console=console,
             refresh_per_second=2,
@@ -149,6 +152,7 @@ async def _display_loop(
 
                 # Update display
                 sync_status = sync_manager.sync_status if sync_manager else None
+                sync_error = sync_manager.sync_error if sync_manager else None
                 live.update(
                     render_dashboard(
                         orchestrator.state,
@@ -156,6 +160,7 @@ async def _display_loop(
                         orchestrator.conn_message,
                         conn_mgr.router.total_notifications,
                         sync_status=sync_status,
+                        sync_error=sync_error,
                     )
                 )
     finally:

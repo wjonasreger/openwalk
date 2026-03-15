@@ -1,9 +1,11 @@
-"""Tests for CLI commands: history, export, and config."""
+"""Tests for CLI commands: history, export, config, and sync."""
 
 import json
 
 import pytest
+from click.testing import CliRunner
 
+from openwalk.cli.main import cli
 from openwalk.config import (
     DEFAULT_CONFIG,
     config_to_profile,
@@ -184,3 +186,48 @@ class TestExportJson:
         assert parsed["session"]["id"] == sid
         assert len(parsed["samples"]) == 1
         assert parsed["samples"][0]["steps"] == 10
+
+
+# ──────────────────────────────────────────────────────────────────────
+# CLI Routing Tests
+# ──────────────────────────────────────────────────────────────────────
+
+
+class TestCliRouting:
+    """Verify CLI commands exist and accept expected options."""
+
+    def test_history_help(self):
+        runner = CliRunner()
+        result = runner.invoke(cli, ["history", "--help"])
+        assert result.exit_code == 0
+        assert "List past walking sessions" in result.output
+        assert "--limit" in result.output
+
+    def test_export_help(self):
+        runner = CliRunner()
+        result = runner.invoke(cli, ["export", "--help"])
+        assert result.exit_code == 0
+        assert "Export session data" in result.output
+        assert "--format" in result.output
+        assert "--output" in result.output
+
+    def test_sync_help(self):
+        runner = CliRunner()
+        result = runner.invoke(cli, ["sync", "--help"])
+        assert result.exit_code == 0
+        assert "Sync walking sessions" in result.output
+        assert "--session" in result.output
+        assert "--retry" in result.output
+        assert "--status" in result.output
+
+    def test_config_show_help(self):
+        runner = CliRunner()
+        result = runner.invoke(cli, ["config", "show", "--help"])
+        assert result.exit_code == 0
+        assert "Display current configuration" in result.output
+
+    def test_run_help(self):
+        runner = CliRunner()
+        result = runner.invoke(cli, ["run", "--help"])
+        assert result.exit_code == 0
+        assert "--debug" in result.output

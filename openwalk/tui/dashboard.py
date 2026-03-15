@@ -27,6 +27,7 @@ def render_dashboard(
     conn_message: str,
     total_messages: int,
     sync_status: str | None = None,
+    sync_error: str | None = None,
 ) -> Panel:
     """Build the complete dashboard panel from current state."""
     parts: list[RenderableType] = [
@@ -41,6 +42,7 @@ def render_dashboard(
             total_messages,
             state.truncated_count,
             sync_status=sync_status,
+            sync_error=sync_error,
         ),
     ]
     return Panel(
@@ -122,6 +124,7 @@ def render_status_bar(
     total_messages: int,
     truncated_count: int,
     sync_status: str | None = None,
+    sync_error: str | None = None,
 ) -> Text:
     """Connection status indicator, session info, message counts."""
     text = Text()
@@ -158,7 +161,8 @@ def render_status_bar(
         elif sync_status == "syncing":
             text.append("syncing", style="dim cyan")
         elif sync_status == "error":
-            text.append("error", style="dim red")
+            error_detail = f" ({sync_error[:40]})" if sync_error else ""
+            text.append(f"error{error_detail}", style="dim red")
         else:
             text.append("off", style="dim")
 
