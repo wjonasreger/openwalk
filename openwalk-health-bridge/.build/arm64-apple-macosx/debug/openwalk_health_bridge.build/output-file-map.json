@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/openwalk_health_bridge.build/master.swiftdeps"
+  },
+  "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/CLI/main.swift": {
+    "dependencies": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/openwalk_health_bridge.build/main.d",
+    "object": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/openwalk_health_bridge.build/main.swift.o",
+    "swiftmodule": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/openwalk_health_bridge.build/main~partial.swiftmodule",
+    "swift-dependencies": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/openwalk_health_bridge.build/main.swiftdeps",
+    "diagnostics": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/openwalk_health_bridge.build/main.dia"
+  }
+}

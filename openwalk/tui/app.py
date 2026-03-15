@@ -13,9 +13,12 @@ from rich.live import Live
 from openwalk.ble.connection import ConnectionManager
 from openwalk.config import config_to_profile, load_config
 from openwalk.session.orchestrator import SessionOrchestrator
+from openwalk.storage.chunks import ChunkManager
 from openwalk.storage.database import Database
 from openwalk.storage.samples import SampleManager
 from openwalk.storage.sessions import SessionManager
+from openwalk.sync.healthkit_bridge import HealthKitBridge
+from openwalk.sync.sync_manager import SyncManager
 from openwalk.tui.dashboard import render_dashboard
 from openwalk.tui.keyboard import read_key
 
@@ -48,7 +51,33 @@ async def run_app(debug: bool = False) -> None:
         # Load config and create user profile
         config = load_config()
         profile = config_to_profile(config)
-        orchestrator = SessionOrchestrator(session_mgr, sample_mgr, profile)
+
+        # Set up HealthKit sync (optional — graceful if bridge not found)
+        sync_manager = None
+        hk_config = config.get("healthkit", {})
+        if hk_config.get("enabled", True):
+            try:
+                bridge_path = hk_config.get("bridge_path", "") or None
+                bridge = HealthKitBridge(binary_path=bridge_path)
+                if bridge.available:
+                    chunk_mgr = ChunkManager(db)
+                    sync_manager = SyncManager(
+                        session_mgr=session_mgr,
+                        chunk_mgr=chunk_mgr,
+                        bridge=bridge,
+                        sample_mgr=sample_mgr,
+                        profile=profile,
+                        sync_interval=float(hk_config.get("sync_interval", 60)),
+                    )
+                    logger.info("HealthKit sync enabled")
+                else:
+                    logger.info("HealthKit bridge not found — sync disabled")
+            except Exception:
+                logger.exception("Failed to initialize HealthKit sync")
+
+        orchestrator = SessionOrchestrator(
+            session_mgr, sample_mgr, profile, sync_manager=sync_manager
+        )
 
         # Create connection manager wired to orchestrator callbacks
         conn_mgr = ConnectionManager(
@@ -63,7 +92,7 @@ async def run_app(debug: bool = False) -> None:
         db_task = asyncio.create_task(orchestrator.process_db_queue())
 
         try:
-            await _display_loop(console, orchestrator, conn_mgr)
+            await _display_loop(console, orchestrator, conn_mgr, sync_manager)
         finally:
             # Graceful shutdown
             console.print("\n[dim]Shutting down...[/dim]")
@@ -82,6 +111,7 @@ async def _display_loop(
     console: Console,
     orchestrator: SessionOrchestrator,
     conn_mgr: ConnectionManager,
+    sync_manager: SyncManager | None = None,
 ) -> None:
     """Run the Rich Live display loop with keyboard handling."""
     keyboard_task = asyncio.create_task(_keyboard_handler(orchestrator, conn_mgr))
@@ -96,6 +126,8 @@ async def _display_loop(
     for sig in (signal.SIGINT, signal.SIGTERM):
         loop.add_signal_handler(sig, _handle_signal)
 
+    sync_status = sync_manager.sync_status if sync_manager else None
+
     try:
         with Live(
             render_dashboard(
@@ -103,6 +135,7 @@ async def _display_loop(
                 orchestrator.conn_state,
                 orchestrator.conn_message,
                 conn_mgr.router.total_notifications,
+                sync_status=sync_status,
             ),
             console=console,
             refresh_per_second=2,
@@ -115,12 +148,14 @@ async def _display_loop(
                 await orchestrator.check_inactivity()
 
                 # Update display
+                sync_status = sync_manager.sync_status if sync_manager else None
                 live.update(
                     render_dashboard(
                         orchestrator.state,
                         orchestrator.conn_state,
                         orchestrator.conn_message,
                         conn_mgr.router.total_notifications,
+                        sync_status=sync_status,
                     )
                 )
     finally:

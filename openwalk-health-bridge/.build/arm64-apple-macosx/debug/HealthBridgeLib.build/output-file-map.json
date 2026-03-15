@@ -1,0 +1,40 @@
+{
+  "": {
+    "swift-dependencies": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/master.swiftdeps"
+  },
+  "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/ChunkWriter.swift": {
+    "dependencies": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/ChunkWriter.d",
+    "object": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/ChunkWriter.swift.o",
+    "swiftmodule": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/ChunkWriter~partial.swiftmodule",
+    "swift-dependencies": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/ChunkWriter.swiftdeps",
+    "diagnostics": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/ChunkWriter.dia"
+  },
+  "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/Deduplication.swift": {
+    "dependencies": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/Deduplication.d",
+    "object": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/Deduplication.swift.o",
+    "swiftmodule": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/Deduplication~partial.swiftmodule",
+    "swift-dependencies": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/Deduplication.swiftdeps",
+    "diagnostics": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/Deduplication.dia"
+  },
+  "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/HealthBridge.swift": {
+    "dependencies": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/HealthBridge.d",
+    "object": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/HealthBridge.swift.o",
+    "swiftmodule": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/HealthBridge~partial.swiftmodule",
+    "swift-dependencies": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/HealthBridge.swiftdeps",
+    "diagnostics": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/HealthBridge.dia"
+  },
+  "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/Models.swift": {
+    "dependencies": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/Models.d",
+    "object": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/Models.swift.o",
+    "swiftmodule": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/Models~partial.swiftmodule",
+    "swift-dependencies": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/Models.swiftdeps",
+    "diagnostics": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/Models.dia"
+  },
+  "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/WorkoutWriter.swift": {
+    "dependencies": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/WorkoutWriter.d",
+    "object": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/WorkoutWriter.swift.o",
+    "swiftmodule": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/WorkoutWriter~partial.swiftmodule",
+    "swift-dependencies": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/WorkoutWriter.swiftdeps",
+    "diagnostics": "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/WorkoutWriter.dia"
+  }
+}

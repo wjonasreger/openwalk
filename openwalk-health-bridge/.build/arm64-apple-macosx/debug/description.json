@@ -1,0 +1,479 @@
+{
+  "builtTestProducts" : [
+
+  ],
+  "copyCommands" : {
+
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.HealthBridgeLib-arm64-apple-macosx26.0-debug.module" : {
+      "executable" : "/Library/Developer/CommandLineTools/usr/bin/swiftc",
+      "fileList" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/sources",
+      "importPath" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/ChunkWriter.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/Deduplication.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/HealthBridge.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/Models.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/WorkoutWriter.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "HealthBridgeLib",
+      "moduleOutputPath" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/Modules/HealthBridgeLib.swiftmodule",
+      "objects" : [
+        "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/ChunkWriter.swift.o",
+        "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/Deduplication.swift.o",
+        "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/HealthBridge.swift.o",
+        "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/Models.swift.o",
+        "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/WorkoutWriter.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx14.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j10",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/include/HealthBridgeLib-Swift.h",
+        "-swift-version",
+        "5",
+        "-I",
+        "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+        "-L",
+        "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+        "-plugin-path",
+        "/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "openwalk_health_bridge"
+      ],
+      "outputFileMapPath" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/ChunkWriter.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/Deduplication.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/HealthBridge.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/Models.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/WorkoutWriter.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/Modules/HealthBridgeLib.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/ChunkWriter.swift",
+        "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/Deduplication.swift",
+        "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/HealthBridge.swift",
+        "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/Models.swift",
+        "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/WorkoutWriter.swift"
+      ],
+      "tempsPath" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.openwalk-health-bridge-arm64-apple-macosx26.0-debug.module" : {
+      "executable" : "/Library/Developer/CommandLineTools/usr/bin/swiftc",
+      "fileList" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/openwalk_health_bridge.build/sources",
+      "importPath" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/CLI/main.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/Modules/HealthBridgeLib.swiftmodule"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/openwalk_health_bridge.build/sources"
+        }
+      ],
+      "isLibrary" : false,
+      "moduleName" : "openwalk_health_bridge",
+      "moduleOutputPath" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/Modules/openwalk_health_bridge.swiftmodule",
+      "objects" : [
+        "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/openwalk_health_bridge.build/main.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx14.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j10",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-Xfrontend",
+        "-entry-point-function-name",
+        "-Xfrontend",
+        "openwalk_health_bridge_main",
+        "-swift-version",
+        "5",
+        "-I",
+        "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+        "-L",
+        "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+        "-plugin-path",
+        "/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "openwalk_health_bridge"
+      ],
+      "outputFileMapPath" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/openwalk_health_bridge.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/openwalk_health_bridge.build/main.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/Modules/openwalk_health_bridge.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/CLI/main.swift"
+      ],
+      "tempsPath" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/openwalk_health_bridge.build",
+      "wholeModuleOptimization" : false
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "HealthBridgeLib" : [
+      "/Library/Developer/CommandLineTools/usr/bin/swiftc",
+      "-module-name",
+      "HealthBridgeLib",
+      "-package-name",
+      "openwalk_health_bridge",
+      "-c",
+      "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/ChunkWriter.swift",
+      "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/Deduplication.swift",
+      "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/HealthBridge.swift",
+      "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/Models.swift",
+      "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/WorkoutWriter.swift",
+      "-I",
+      "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx14.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j10",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/include/HealthBridgeLib-Swift.h",
+      "-swift-version",
+      "5",
+      "-I",
+      "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+      "-L",
+      "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+      "-plugin-path",
+      "/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "openwalk_health_bridge",
+      "-driver-use-frontend-path",
+      "/Library/Developer/CommandLineTools/usr/bin/swiftc"
+    ],
+    "openwalk_health_bridge" : [
+      "/Library/Developer/CommandLineTools/usr/bin/swiftc",
+      "-module-name",
+      "openwalk_health_bridge",
+      "-package-name",
+      "openwalk_health_bridge",
+      "-c",
+      "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/CLI/main.swift",
+      "-I",
+      "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx14.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j10",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-Xfrontend",
+      "-entry-point-function-name",
+      "-Xfrontend",
+      "openwalk_health_bridge_main",
+      "-swift-version",
+      "5",
+      "-I",
+      "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+      "-L",
+      "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+      "-plugin-path",
+      "/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "openwalk_health_bridge",
+      "-driver-use-frontend-path",
+      "/Library/Developer/CommandLineTools/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "HealthBridgeLib" : [
+
+    ],
+    "openwalk_health_bridge" : [
+      "HealthBridgeLib"
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+
+  },
+  "traitConfiguration" : {
+    "default" : {
+
+    }
+  },
+  "writeCommands" : {
+    "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/ChunkWriter.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/Deduplication.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/HealthBridge.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/Models.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/HealthBridgeLib/WorkoutWriter.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/sources"
+    },
+    "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/openwalk-health-bridge-entitlement.plist" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<entitlement-plist>"
+        },
+        {
+          "kind" : "virtual",
+          "name" : "<com.apple.security.get-task-allow>"
+        }
+      ],
+      "outputFilePath" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/openwalk-health-bridge-entitlement.plist"
+    },
+    "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/openwalk-health-bridge.product/Objects.LinkFileList" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<link-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/ChunkWriter.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/Deduplication.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/HealthBridge.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/Models.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/HealthBridgeLib.build/WorkoutWriter.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/openwalk_health_bridge.build/main.swift.o"
+        }
+      ],
+      "outputFilePath" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/openwalk-health-bridge.product/Objects.LinkFileList"
+    },
+    "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/openwalk_health_bridge.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/Sources/CLI/main.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/openwalk_health_bridge.build/sources"
+    },
+    "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Library/Developer/CommandLineTools/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Users/wjonasreger/Documents/Repositories.nosync/openwalk/openwalk-health-bridge/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"
+    }
+  }
+}
