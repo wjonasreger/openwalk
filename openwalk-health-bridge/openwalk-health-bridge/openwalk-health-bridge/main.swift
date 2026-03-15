@@ -1,6 +1,5 @@
 import Foundation
 import HealthKit
-import HealthBridgeLib
 
 // Synchronous entry point — only enters async when needed to avoid
 // Swift's top-level async run loop preventing exit().
