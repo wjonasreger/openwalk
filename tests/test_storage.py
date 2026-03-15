@@ -10,7 +10,6 @@ from openwalk.storage.samples import SampleManager, SampleRow
 from openwalk.storage.schema import SCHEMA_VERSION
 from openwalk.storage.sessions import SessionManager, SessionRow, SessionState
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -91,9 +90,7 @@ class TestDatabaseInit:
         assert row[0].lower() in ("wal", "memory")
 
     async def test_tables_created(self, db: Database) -> None:
-        rows = await db.fetchall(
-            "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
-        )
+        rows = await db.fetchall("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
         names = [r["name"] for r in rows]
         assert "sessions" in names
         assert "samples" in names
@@ -306,9 +303,7 @@ class TestSessionStateMachine:
         await samples.insert_sample(session_id, make_data_message())
         await sessions.finalize_session(session_id)
         await sessions.transition_state(session_id, SessionState.SYNC_PENDING)
-        await sessions.transition_state(
-            session_id, SessionState.SYNC_FAILED, error="timeout"
-        )
+        await sessions.transition_state(session_id, SessionState.SYNC_FAILED, error="timeout")
 
         await sessions.transition_state(session_id, SessionState.SYNC_PENDING)
 
@@ -393,9 +388,7 @@ class TestSessionRecovery:
 class TestSampleOperations:
     """Test sample insertion and queries."""
 
-    async def test_insert_sample(
-        self, sessions: SessionManager, samples: SampleManager
-    ) -> None:
+    async def test_insert_sample(self, sessions: SessionManager, samples: SampleManager) -> None:
         session_id = await sessions.create_session()
         msg = make_data_message()
         sample_id = await samples.insert_sample(session_id, msg)
@@ -428,12 +421,8 @@ class TestSampleOperations:
     ) -> None:
         session_id = await sessions.create_session()
 
-        msg1 = make_data_message(
-            steps=10, timestamp=datetime(2026, 2, 17, 10, 0, 0)
-        )
-        msg2 = make_data_message(
-            steps=20, timestamp=datetime(2026, 2, 17, 10, 0, 1)
-        )
+        msg1 = make_data_message(steps=10, timestamp=datetime(2026, 2, 17, 10, 0, 0))
+        msg2 = make_data_message(steps=20, timestamp=datetime(2026, 2, 17, 10, 0, 1))
 
         await samples.insert_sample(session_id, msg1, cumulative_steps=10)
         await samples.insert_sample(session_id, msg2, cumulative_steps=20)
@@ -442,20 +431,18 @@ class TestSampleOperations:
         assert latest is not None
         assert latest.steps == 20
 
-    async def test_get_latest_sample_none(self, sessions: SessionManager, samples: SampleManager) -> None:
+    async def test_get_latest_sample_none(
+        self, sessions: SessionManager, samples: SampleManager
+    ) -> None:
         session_id = await sessions.create_session()
         result = await samples.get_latest_sample(session_id)
         assert result is None
 
-    async def test_get_samples(
-        self, sessions: SessionManager, samples: SampleManager
-    ) -> None:
+    async def test_get_samples(self, sessions: SessionManager, samples: SampleManager) -> None:
         session_id = await sessions.create_session()
 
         for i in range(3):
-            msg = make_data_message(
-                steps=i * 10, timestamp=datetime(2026, 2, 17, 10, 0, i)
-            )
+            msg = make_data_message(steps=i * 10, timestamp=datetime(2026, 2, 17, 10, 0, i))
             await samples.insert_sample(session_id, msg, cumulative_steps=i * 10)
 
         all_samples = await samples.get_samples(session_id)
@@ -464,9 +451,7 @@ class TestSampleOperations:
         assert all_samples[0].steps == 0
         assert all_samples[2].steps == 20
 
-    async def test_get_sample_count(
-        self, sessions: SessionManager, samples: SampleManager
-    ) -> None:
+    async def test_get_sample_count(self, sessions: SessionManager, samples: SampleManager) -> None:
         session_id = await sessions.create_session()
 
         count = await samples.get_sample_count(session_id)
@@ -489,9 +474,7 @@ class TestSampleOperations:
         assert sample is not None
         assert sample.raw_hex == "deadbeef"
 
-    async def test_sample_row_type(
-        self, sessions: SessionManager, samples: SampleManager
-    ) -> None:
+    async def test_sample_row_type(self, sessions: SessionManager, samples: SampleManager) -> None:
         session_id = await sessions.create_session()
         await samples.insert_sample(session_id, make_data_message())
 
@@ -523,9 +506,7 @@ class TestErrorLogging:
         assert row["expected_length"] == 16
         assert row["connection_state"] == "CONNECTED"
 
-    async def test_insert_error_without_session(
-        self, samples: SampleManager, db: Database
-    ) -> None:
+    async def test_insert_error_without_session(self, samples: SampleManager, db: Database) -> None:
         frame = make_truncated_frame()
         error_id = await samples.insert_error(None, frame)
         assert error_id >= 1
@@ -541,8 +522,6 @@ class TestErrorLogging:
         frame = make_truncated_frame(variant="DATA_12", actual_size=12)
         await samples.insert_error(session_id, frame)
 
-        row = await db.fetchone(
-            "SELECT * FROM error_log WHERE session_id = ?", (session_id,)
-        )
+        row = await db.fetchone("SELECT * FROM error_log WHERE session_id = ?", (session_id,))
         assert row is not None
         assert "DATA_12" in row["error_message"]

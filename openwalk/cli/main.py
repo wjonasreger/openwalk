@@ -1,5 +1,7 @@
 """CLI entry point for OpenWalk."""
 
+import asyncio
+
 import click
 
 
@@ -14,9 +16,9 @@ def cli() -> None:
 @click.option("--debug", is_flag=True, help="Enable debug logging")
 def run(debug: bool) -> None:
     """Start OpenWalk and connect to treadmill."""
-    click.echo("OpenWalk starting... (not yet implemented)")
-    if debug:
-        click.echo("Debug mode enabled")
+    from openwalk.tui.app import run_app
+
+    asyncio.run(run_app(debug=debug))
 
 
 if __name__ == "__main__":

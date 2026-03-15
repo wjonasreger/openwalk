@@ -16,7 +16,6 @@ from openwalk.ble.connection import (
 from openwalk.ble.notifications import MessageRateTracker, NotificationRouter
 from openwalk.ble.scanner import CACHE_FILE, load_device_uuid, save_device_uuid
 
-
 # =============================================================================
 # ReconnectStrategy
 # =============================================================================
@@ -248,19 +247,26 @@ class TestNotificationRouter:
 
     def _make_data_frame(self) -> bytes:
         """Create a valid DATA frame (16 bytes)."""
-        return bytes([
-            0x5B, 0x0D, 0x05, 0x00,  # start, length, type, flag
-            0x0A,                      # steps=10
-            0x00,                      # reserved
-            0x64, 0x00,                # distance=100 (1.00 mi)
-            0x04,                      # belt_revs=4
-            0x00,                      # reserved
-            0x20, 0x00,                # motor_pulses=32
-            0x0A,                      # speed=10
-            0x01,                      # belt_state=1 (running)
-            0x00,                      # padding
-            0x5D,                      # end
-        ])
+        return bytes(
+            [
+                0x5B,
+                0x0D,
+                0x05,
+                0x00,  # start, length, type, flag
+                0x0A,  # steps=10
+                0x00,  # reserved
+                0x64,
+                0x00,  # distance=100 (1.00 mi)
+                0x04,  # belt_revs=4
+                0x00,  # reserved
+                0x20,
+                0x00,  # motor_pulses=32
+                0x0A,  # speed=10
+                0x01,  # belt_state=1 (running)
+                0x00,  # padding
+                0x5D,  # end
+            ]
+        )
 
     def test_callback_receives_messages(self) -> None:
         messages: list = []
