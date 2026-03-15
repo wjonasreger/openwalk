@@ -1,6 +1,6 @@
 [project]
 name = "openwalk"
-version = "0.1.0"
+version = "1.0.0"
 description = "macOS terminal app for the InMovement Unsit treadmill. Captures walking sessions via BLE and tracks steps, distance, and calories in real-time."
 readme = "README.md"
 requires-python = ">=3.11"
