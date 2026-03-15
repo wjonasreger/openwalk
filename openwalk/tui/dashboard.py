@@ -73,6 +73,12 @@ def render_metrics_table(state: LiveSessionState) -> Table:
         "Burn:",
         f"{state.net_cal_per_min:.1f} kcal/min",
     )
+    table.add_row(
+        "Step Rate:",
+        f"{state.step_rate:.0f} /min",
+        "Max Speed:",
+        f"{state.max_speed}/20",
+    )
     return table
 
 

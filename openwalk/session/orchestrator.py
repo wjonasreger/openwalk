@@ -103,6 +103,7 @@ class SessionOrchestrator:
         s.total_belt_revs = cumulative_belt_revs
         s.distance_raw = msg.distance_raw
         s.speed = msg.speed
+        s.max_speed = max(s.max_speed, msg.speed)
         s.belt_state = msg.belt_state
         s.last_data_at = now
         s.data_count += 1
@@ -189,8 +190,8 @@ class SessionOrchestrator:
             distance_raw=self._state.distance_raw,
             distance_miles=self._state.distance_miles,
             calories=int(self._state.net_calories),
-            max_speed=self._state.speed,
-            avg_speed=self._state.speed,
+            max_speed=self._state.max_speed,
+            avg_speed=round(self._state.avg_speed_mph, 2),
         )
         await self._session_mgr.finalize_session(session_id)
         logger.info("Session %d ended", session_id)

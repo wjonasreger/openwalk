@@ -100,7 +100,14 @@ class TestRenderMetricsTable:
         state.total_steps = 1247
         state.speed = 15
         table = render_metrics_table(state)
-        assert table.row_count == 4
+        assert table.row_count == 5
+
+    def test_shows_max_speed(self):
+        state = LiveSessionState()
+        state.max_speed = 18
+        table = render_metrics_table(state)
+        # Verify table renders without error (Rich Table)
+        assert table.row_count == 5
 
 
 class TestRenderStatusBar:

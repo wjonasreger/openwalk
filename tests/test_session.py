@@ -325,10 +325,27 @@ class TestLiveSessionState:
         assert s.net_calories > 0.0
         assert s.net_calories < s.gross_calories
 
+    def test_max_speed_default(self):
+        s = LiveSessionState()
+        assert s.max_speed == 0
+
+    def test_avg_speed_mph_no_data(self):
+        s = LiveSessionState()
+        assert s.avg_speed_mph == 0.0
+
+    def test_avg_speed_mph_calculation(self):
+        s = LiveSessionState()
+        s.started_at = datetime.now() - timedelta(hours=1)
+        s.last_data_at = datetime.now()
+        s.distance_raw = 100  # 1.0 miles
+        # 1.0 miles in 1 hour = 1.0 mph
+        assert abs(s.avg_speed_mph - 1.0) < 0.05
+
     def test_reset(self):
         s = LiveSessionState()
         s.session_id = 42
         s.total_steps = 500
+        s.max_speed = 15
         s.gross_calories = 100.0
         s.data_count = 200
 
@@ -336,6 +353,7 @@ class TestLiveSessionState:
 
         assert s.session_id is None
         assert s.total_steps == 0
+        assert s.max_speed == 0
         assert s.gross_calories == 0.0
         assert s.data_count == 0
 
@@ -374,6 +392,17 @@ class TestOrchestratorDataHandling:
 
         # 250 -> 5 with wrap: total should be 261 (256 + 5)
         assert orchestrator.state.total_steps == 261
+
+    async def test_max_speed_tracked(self, orchestrator):
+        data1 = _build_ble_notification(steps=5, speed=10, belt_state=1)
+        data2 = _build_ble_notification(steps=10, speed=18, belt_state=1)
+        data3 = _build_ble_notification(steps=15, speed=12, belt_state=1)
+        orchestrator.handle_raw_data(data1)
+        orchestrator.handle_raw_data(data2)
+        orchestrator.handle_raw_data(data3)
+
+        assert orchestrator.state.max_speed == 18
+        assert orchestrator.state.speed == 12  # current speed
 
 
 class TestOrchestratorIdle:

@@ -11,7 +11,7 @@ from rich.console import Console
 from rich.live import Live
 
 from openwalk.ble.connection import ConnectionManager
-from openwalk.session.calories import UserProfile
+from openwalk.config import config_to_profile, load_config
 from openwalk.session.orchestrator import SessionOrchestrator
 from openwalk.storage.database import Database
 from openwalk.storage.samples import SampleManager
@@ -45,8 +45,9 @@ async def run_app(debug: bool = False) -> None:
         # Recover any interrupted sessions from a previous run
         await session_mgr.recover_interrupted()
 
-        # Create orchestrator with default user profile
-        profile = UserProfile()
+        # Load config and create user profile
+        config = load_config()
+        profile = config_to_profile(config)
         orchestrator = SessionOrchestrator(session_mgr, sample_mgr, profile)
 
         # Create connection manager wired to orchestrator callbacks

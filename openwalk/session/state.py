@@ -31,6 +31,7 @@ class LiveSessionState:
 
     # Current readings
     speed: int = 0
+    max_speed: int = 0
     belt_state: int = 0
     last_data_at: datetime | None = None
 
@@ -89,6 +90,14 @@ class LiveSessionState:
     @property
     def is_belt_running(self) -> bool:
         return self.belt_state == 1
+
+    @property
+    def avg_speed_mph(self) -> float:
+        """Average speed in mph computed from distance and elapsed time."""
+        elapsed_hrs = self.elapsed_seconds / 3600.0
+        if elapsed_hrs > 0:
+            return self.distance_miles / elapsed_hrs
+        return 0.0
 
     @property
     def step_rate(self) -> float:
@@ -150,6 +159,7 @@ class LiveSessionState:
         self.total_belt_revs = 0
         self.distance_raw = 0
         self.speed = 0
+        self.max_speed = 0
         self.belt_state = 0
         self.last_data_at = None
         self.gross_calories = 0.0
