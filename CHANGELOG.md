@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.1] - 2026-03-15
+
+### Fixed
+- Step counter rewired to bytes 10-11 (uint16 BE) — actual footsteps, not belt-derived cadence
+- Flag validation relaxed (was silently dropping all DATA messages for flag values > 10)
+- Session history: steps and distance now session-relative instead of cumulative treadmill counters
+- Session history: duration, calories, and avg speed no longer overwritten with NULLs at finalization
+- Avg speed computed from running average of speed readings instead of broken distance/time formula
+- Crash recovery computes correct session deltas from sample data
+
+### Changed
+- Calories only accumulate while actively stepping (step_rate > 0)
+- Sparkline window configurable via `[display] sparkline_minutes` in config (default 15 min, was hardcoded 60 min)
+- Debug logging writes to `/tmp/openwalk_debug.log` instead of stderr
+
 ## [1.0.0] - 2026-03-15
 
 ### Added

@@ -3,5 +3,5 @@
 Captures walking sessions via BLE and tracks steps, distance, and calories in real-time.
 """
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __author__ = "W. Jonas Reger"
