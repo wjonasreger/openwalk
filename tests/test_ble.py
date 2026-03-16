@@ -250,14 +250,14 @@ class TestNotificationRouter:
                 0x0D,
                 0x05,
                 0x00,  # start, length, type, flag
-                0x0A,  # steps=10
+                0x19,  # belt_cadence=25
                 0x00,  # reserved
                 0x64,
                 0x00,  # distance=100 (1.00 mi)
                 0x04,  # belt_revs=4
                 0x00,  # reserved
-                0x20,
-                0x00,  # motor_pulses=32
+                0x00,
+                0x0A,  # steps=10 (big-endian)
                 0x0A,  # speed=10
                 0x01,  # belt_state=1 (running)
                 0x00,  # padding

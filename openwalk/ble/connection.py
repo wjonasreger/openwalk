@@ -226,6 +226,7 @@ class ConnectionManager:
     def _notification_handler(self, sender: object, data: bytearray) -> None:
         """Handle BLE notification: reset watchdog and route data."""
         self.watchdog.reset()
+        logger.debug("Notification: %d bytes, hex=%s", len(data), bytes(data).hex())
 
         if self._on_data:
             try:

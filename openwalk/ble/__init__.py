@@ -24,7 +24,9 @@ from openwalk.ble.characteristics import (
     SPEED_MAX,
     SPEED_MIN,
     UINT8_MAX,
-    WRAP_THRESHOLD,
+    UINT16_MAX,
+    WRAP_THRESHOLD_UINT8,
+    WRAP_THRESHOLD_UINT16,
     WRITE_CHAR_UUID,
 )
 from openwalk.ble.connection import (
@@ -71,7 +73,9 @@ __all__ = [
     "SPEED_MAX",
     "SPEED_MIN",
     "UINT8_MAX",
-    "WRAP_THRESHOLD",
+    "UINT16_MAX",
+    "WRAP_THRESHOLD_UINT8",
+    "WRAP_THRESHOLD_UINT16",
     # Connection Manager
     "ConnectionManager",
     "ConnectionState",

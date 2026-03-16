@@ -21,6 +21,9 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "age_years": 29,
         "gender": "male",
     },
+    "display": {
+        "sparkline_minutes": 15,
+    },
 }
 
 # TOML template for config init (tomllib is read-only, so we write manually)
@@ -33,6 +36,9 @@ weight_lbs = {weight_lbs}
 height_inches = {height_inches}
 age_years = {age_years}
 gender = "{gender}"
+
+[display]
+sparkline_minutes = {sparkline_minutes}
 """
 
 
@@ -63,11 +69,13 @@ def save_config(config: dict[str, Any], path: Path = CONFIG_PATH) -> None:
     """Save config to TOML file."""
     path.parent.mkdir(parents=True, exist_ok=True)
     user = config.get("user", DEFAULT_CONFIG["user"])
+    display = config.get("display", DEFAULT_CONFIG["display"])
     content = _CONFIG_TEMPLATE.format(
         weight_lbs=user["weight_lbs"],
         height_inches=user["height_inches"],
         age_years=user["age_years"],
         gender=user["gender"],
+        sparkline_minutes=display.get("sparkline_minutes", 15),
     )
     path.write_text(content)
 

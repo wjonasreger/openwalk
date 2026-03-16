@@ -95,7 +95,7 @@ class SampleManager:
                 steps,
                 msg.distance_raw,
                 None,  # calories_raw: computed by caller, not in protocol
-                msg.motor_pulses,  # motor_pulses stored as elapsed_seconds placeholder
+                None,  # elapsed_seconds: not in protocol
                 msg.speed,
                 msg.belt_state,
                 msg.raw_hex,

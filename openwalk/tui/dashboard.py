@@ -85,10 +85,15 @@ def render_metrics_table(state: LiveSessionState) -> Table:
 def render_sparklines(state: LiveSessionState) -> Group:
     """Render speed, step rate, and calorie sparklines."""
     now = datetime.now()
-    one_hour_ago = now - timedelta(hours=1)
+    window_ago = now - timedelta(minutes=state.sparkline_minutes)
     start = state.started_at or now
-    sparkline_start = max(start, one_hour_ago)
+    sparkline_start = max(start, window_ago)
     width = 40
+
+    # Active window length (capped at sparkline_minutes)
+    active_seconds = (now - sparkline_start).total_seconds()
+    active_min = int(active_seconds) // 60
+    active_sec = int(active_seconds) % 60
 
     speed_vals = _extract_sparkline_values(state.speed_history, sparkline_start, now, width)
     rate_vals = _extract_sparkline_values(state.step_rate_history, sparkline_start, now, width)
@@ -97,6 +102,12 @@ def render_sparklines(state: LiveSessionState) -> Group:
     speed_line = render_sparkline(speed_vals, max_val=20.0)
     rate_line = render_sparkline(rate_vals)
     cal_line = render_sparkline(cal_vals)
+
+    header = Text()
+    header.append(
+        f"  Sparklines ({active_min}:{active_sec:02d} / {state.sparkline_minutes}:00)",
+        style="dim",
+    )
 
     speed_text = Text()
     speed_text.append("  Speed:     ", style="dim")
@@ -110,7 +121,7 @@ def render_sparklines(state: LiveSessionState) -> Group:
     cal_text.append("  Calories:  ", style="dim")
     cal_text.append(cal_line, style="yellow")
 
-    return Group(speed_text, rate_text, cal_text)
+    return Group(header, speed_text, rate_text, cal_text)
 
 
 def render_status_bar(

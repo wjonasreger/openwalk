@@ -70,7 +70,7 @@ class LiveStats:
             self.data_count += 1
             self.last_data = msg
             self.last_speed = msg.speed
-            self.counters.update_steps(msg.steps)
+            self.counters.update_steps(msg.steps)  # actual footstep counter (bytes 10-11 BE)
             self.counters.update_belt_revs(msg.belt_revs)
         elif isinstance(msg, SpeedMessage):
             self.speed_count += 1
@@ -121,7 +121,7 @@ class LiveStats:
             table.add_row("Distance (raw)", str(self.last_data.distance_raw))
             table.add_row("Distance (mi)", f"{self.last_data.distance_miles:.2f}")
             table.add_row("Belt State", "Running" if self.last_data.is_belt_running else "Stopped")
-            table.add_row("Motor Pulses", str(self.last_data.motor_pulses))
+            table.add_row("Belt Cadence", str(self.last_data.belt_cadence))
             table.add_row("Flag", str(self.last_data.flag))
 
         # Add separator

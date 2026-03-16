@@ -67,20 +67,20 @@ def _make_data_msg(
     speed: int = 10,
     belt_state: int = 1,
     belt_revs: int = 4,
-    motor_pulses: int = 100,
+    belt_cadence: int = 25,
     flag: int = 0,
     timestamp: datetime | None = None,
 ) -> DataMessage:
     """Create a DataMessage for testing."""
     ts = timestamp or datetime.now()
-    raw_hex = "5b10050a003200040064000a0100005d"
+    raw_hex = "5b0d050019003200040000000a01005d"
     return DataMessage(
         timestamp=ts,
         flag=flag,
-        steps=steps,
+        belt_cadence=belt_cadence,
         distance_raw=distance_raw,
         belt_revs=belt_revs,
-        motor_pulses=motor_pulses,
+        steps=steps,
         speed=speed,
         belt_state=belt_state,
         raw_hex=raw_hex,
@@ -119,31 +119,34 @@ def _build_ble_notification(
     distance_lo: int = 0x32,
     distance_hi: int = 0x00,
     belt_revs: int = 4,
-    motor_lo: int = 0x64,
-    motor_hi: int = 0x00,
+    belt_cadence: int = 25,
     speed: int = 10,
     belt_state: int = 1,
     flag: int = 0,
 ) -> bytes:
     """Build a raw BLE notification containing a single 16-byte DATA frame.
 
-    Format: [5B][0D][05][flag][steps][00][dist_lo][dist_hi]
-            [belt_revs][00][motor_lo][motor_hi][speed][belt_state][00][5D]
+    Format: [5B][0D][05][flag][belt_cadence][00][dist_lo][dist_hi]
+            [belt_revs][00][steps_hi][steps_lo][speed][belt_state][00][5D]
+
+    Steps (bytes 10-11) are big-endian: high byte first.
     """
+    steps_hi = (steps >> 8) & 0xFF
+    steps_lo = steps & 0xFF
     return bytes(
         [
             0x5B,
             0x0D,
             0x05,
             flag,
-            steps,
+            belt_cadence,
             0x00,
             distance_lo,
             distance_hi,
             belt_revs,
             0x00,
-            motor_lo,
-            motor_hi,
+            steps_hi,
+            steps_lo,
             speed,
             belt_state,
             0x00,
@@ -315,15 +318,32 @@ class TestLiveSessionState:
         p = UserProfile(weight_lbs=150.0, height_inches=68.0, age_years=40, gender="male")
         now = datetime.now()
 
+        # Simulate active stepping so step_rate > 0
+        s.record_step_sample(now, 10)
+        s.record_step_sample(now + timedelta(seconds=5), 20)
+        s._last_step_change_at = now + timedelta(seconds=5)
+
         # First call sets the timestamp but doesn't accumulate
-        s.accumulate_calories(now, 1.0, p)
+        s.accumulate_calories(now + timedelta(seconds=5), 1.0, p)
         assert s.gross_calories == 0.0
 
         # Second call accumulates over time delta
-        s.accumulate_calories(now + timedelta(minutes=1), 1.0, p)
+        s.accumulate_calories(now + timedelta(seconds=6), 1.0, p)
         assert s.gross_calories > 0.0
         assert s.net_calories > 0.0
         assert s.net_calories < s.gross_calories
+
+    def test_calorie_zero_when_not_stepping(self):
+        """Calories should not accumulate when step_rate is 0."""
+        s = LiveSessionState()
+        p = UserProfile(weight_lbs=150.0, height_inches=68.0, age_years=40, gender="male")
+        now = datetime.now()
+
+        # No step activity — step_rate should be 0
+        s.accumulate_calories(now, 1.0, p)
+        s.accumulate_calories(now + timedelta(minutes=1), 1.0, p)
+        assert s.gross_calories == 0.0
+        assert s.net_calories == 0.0
 
     def test_max_speed_default(self):
         s = LiveSessionState()
@@ -385,13 +405,14 @@ class TestOrchestratorDataHandling:
         assert orchestrator.state.data_count == 2
 
     async def test_counter_wrap_around(self, orchestrator):
-        data1 = _build_ble_notification(steps=250, belt_state=1)
+        # Steps is now uint16 (0-65535), wrap threshold is 60000
+        data1 = _build_ble_notification(steps=65530, belt_state=1)
         data2 = _build_ble_notification(steps=5, belt_state=1)
         orchestrator.handle_raw_data(data1)
         orchestrator.handle_raw_data(data2)
 
-        # 250 -> 5 with wrap: total should be 261 (256 + 5)
-        assert orchestrator.state.total_steps == 261
+        # 65530 -> 5 with wrap: total should be 65541 (65536 + 5)
+        assert orchestrator.state.total_steps == 65541
 
     async def test_max_speed_tracked(self, orchestrator):
         data1 = _build_ble_notification(steps=5, speed=10, belt_state=1)
@@ -540,19 +561,28 @@ class TestOrchestratorSessionLifecycle:
 
 class TestOrchestratorCalories:
     async def test_calorie_accumulation_across_messages(self, orchestrator):
-        """Calories should accumulate as data messages arrive."""
+        """Calories should accumulate as data messages arrive with active stepping."""
         now = datetime.now()
-        data1 = _build_ble_notification(steps=5, speed=10, belt_state=1)
+
+        # Seed the step window with enough history so step_rate > 0
+        s = orchestrator.state
+        s.record_step_sample(now - timedelta(seconds=5), 0)
+        s.record_step_sample(now, 10)
+        s._last_step_change_at = now
+
+        data1 = _build_ble_notification(steps=15, speed=10, belt_state=1)
         orchestrator.handle_raw_data(data1)
 
         # Manually set timestamp to simulate time passing
-        orchestrator.state.last_cal_timestamp = now - timedelta(minutes=1)
+        s.last_cal_timestamp = now - timedelta(minutes=1)
+        # Keep step activity recent
+        s._last_step_change_at = now
 
-        data2 = _build_ble_notification(steps=15, speed=10, belt_state=1)
+        data2 = _build_ble_notification(steps=25, speed=10, belt_state=1)
         orchestrator.handle_raw_data(data2)
 
-        assert orchestrator.state.gross_calories > 0
-        assert orchestrator.state.net_calories > 0
+        assert s.gross_calories > 0
+        assert s.net_calories > 0
 
 
 class TestOrchestratorDbQueue:

@@ -64,19 +64,19 @@ class DataMessage:
     """DATA message - primary telemetry packet.
 
     Total size: 16 bytes
-    Structure: [5B] [0D] [05] [flag] [steps] [00] [dist_L] [dist_H]
-               [belt_revs] [00] [motor_L] [motor_H] [speed] [belt_state] [00] [5D]
+    Structure: [5B] [0D] [05] [flag] [belt_cadence] [00] [dist_L] [dist_H]
+               [belt_revs] [00] [steps_H] [steps_L] [speed] [belt_state] [00] [5D]
 
     Sent approximately 2 times per second while belt is running.
     Contains cumulative counters that wrap at their max values.
     """
 
     timestamp: datetime
-    flag: int  # byte 3: 0-4, cycles during session (purpose unknown)
-    steps: int  # byte 4: uint8, wraps at 255
+    flag: int  # byte 3: 0-7, cycles during session (purpose unknown)
+    belt_cadence: int  # byte 4: uint8, belt-derived cadence (~2.55:1 to belt_revs)
     distance_raw: int  # bytes 6-7: uint16 LE, hundredths of a mile
     belt_revs: int  # byte 8: uint8, wraps at 255
-    motor_pulses: int  # bytes 10-11: uint16 LE, encoder pulses
+    steps: int  # bytes 10-11: uint16 BE, actual footstep counter
     speed: int  # byte 12: 1-20 setting level
     belt_state: int  # byte 13: 1 = running
     raw_hex: str

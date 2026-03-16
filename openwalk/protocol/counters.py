@@ -1,23 +1,30 @@
-"""Counter tracking with wrap-around detection for uint8 fields.
+"""Counter tracking with wrap-around detection for BLE protocol fields.
 
-The treadmill uses uint8 counters for steps and belt revolutions.
-These counters wrap from 255 back to 0 during long sessions.
+The treadmill uses:
+- uint16 counter for steps (bytes 10-11 big-endian, actual footsteps)
+- uint8 counter for belt revolutions (byte 8)
+
+These counters wrap at their max values during long sessions.
 This module tracks cumulative totals across wrap-arounds.
 
-Wrap detection uses a threshold of 200 to prevent false positives:
-- If current < previous AND previous > 200, a wrap occurred
-- This avoids false positives from small backward jumps due to data artifacts
+Wrap detection uses a threshold to prevent false positives:
+- If current < previous AND previous > threshold, a wrap occurred
 """
 
-from openwalk.ble.characteristics import UINT8_MAX, WRAP_THRESHOLD
+from openwalk.ble.characteristics import (
+    UINT8_MAX,
+    UINT16_MAX,
+    WRAP_THRESHOLD_UINT8,
+    WRAP_THRESHOLD_UINT16,
+)
 
 
 class CounterTracker:
-    """Track a uint8 counter that wraps at 255.
+    """Track a counter that wraps at a configurable max value.
 
     Used for:
-    - Step counter (byte 4 of DATA message)
-    - Belt revolution counter (byte 8 of DATA message)
+    - Step counter (bytes 10-11 of DATA message, uint16 BE, actual footsteps)
+    - Belt revolution counter (byte 8 of DATA message, uint8)
 
     Example:
         >>> tracker = CounterTracker()
@@ -35,17 +42,26 @@ class CounterTracker:
         261
     """
 
-    def __init__(self) -> None:
-        """Initialize counter tracker."""
+    def __init__(
+        self, max_value: int = UINT8_MAX, wrap_threshold: int = WRAP_THRESHOLD_UINT8
+    ) -> None:
+        """Initialize counter tracker.
+
+        Args:
+            max_value: Maximum counter value before wrap (255 for uint8, 65535 for uint16).
+            wrap_threshold: Threshold for wrap detection.
+        """
         self.total: int = 0
         self.previous_raw: int | None = None
         self.wrap_count: int = 0
+        self._max_value = max_value
+        self._wrap_threshold = wrap_threshold
 
     def update(self, raw_value: int) -> int:
         """Update with new raw value and return cumulative total.
 
         Args:
-            raw_value: Current raw counter value (0-255)
+            raw_value: Current raw counter value
 
         Returns:
             Cumulative total accounting for wrap-arounds
@@ -57,11 +73,11 @@ class CounterTracker:
             return self.total
 
         # Detect wrap: current < previous AND previous > threshold
-        if raw_value < self.previous_raw and self.previous_raw > WRAP_THRESHOLD:
+        if raw_value < self.previous_raw and self.previous_raw > self._wrap_threshold:
             self.wrap_count += 1
 
         # Calculate cumulative total
-        self.total = (self.wrap_count * (UINT8_MAX + 1)) + raw_value
+        self.total = (self.wrap_count * (self._max_value + 1)) + raw_value
         self.previous_raw = raw_value
 
         return self.total
@@ -81,7 +97,7 @@ class CounterTracker:
 class SessionCounters:
     """Track all counters for a walking session.
 
-    Manages step counter and belt revolution counter together,
+    Manages step counter (uint16) and belt revolution counter (uint8),
     providing a unified interface for session tracking.
 
     Example:
@@ -94,20 +110,22 @@ class SessionCounters:
         10
         >>> counters.total_belt_revs
         4
-        >>> counters.steps_per_belt_rev
-        2.5
     """
 
     def __init__(self) -> None:
         """Initialize session counters."""
-        self.steps = CounterTracker()
-        self.belt_revs = CounterTracker()
+        self.steps = CounterTracker(
+            max_value=UINT16_MAX, wrap_threshold=WRAP_THRESHOLD_UINT16
+        )
+        self.belt_revs = CounterTracker(
+            max_value=UINT8_MAX, wrap_threshold=WRAP_THRESHOLD_UINT8
+        )
 
     def update_steps(self, raw_steps: int) -> int:
         """Update step counter and return cumulative total.
 
         Args:
-            raw_steps: Current raw step count from DATA message (byte 4)
+            raw_steps: Current raw step count from DATA message (bytes 10-11 BE)
 
         Returns:
             Cumulative total steps
@@ -139,20 +157,6 @@ class SessionCounters:
     def total_belt_revs(self) -> int:
         """Get cumulative total belt revolutions."""
         return self.belt_revs.total
-
-    @property
-    def steps_per_belt_rev(self) -> float:
-        """Calculate steps per belt revolution.
-
-        Expected ratio is approximately 2.55 steps/revolution
-        based on belt circumference and stride length.
-
-        Returns:
-            Steps per revolution, or 0.0 if no revolutions recorded
-        """
-        if self.belt_revs.total == 0:
-            return 0.0
-        return self.steps.total / self.belt_revs.total
 
 
 def calculate_delta(previous: int, current: int, max_value: int = UINT8_MAX) -> int:

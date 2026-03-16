@@ -75,8 +75,8 @@ def parse_data(frame: bytes, timestamp: datetime) -> DataMessage:
     """Parse a DATA message frame.
 
     DATA structure (16 bytes):
-    [5B] [0D] [05] [flag] [steps] [00] [dist_L] [dist_H]
-    [belt_revs] [00] [motor_L] [motor_H] [speed] [belt_state] [00] [5D]
+    [5B] [0D] [05] [flag] [belt_cadence] [00] [dist_L] [dist_H]
+    [belt_revs] [00] [steps_H] [steps_L] [speed] [belt_state] [00] [5D]
 
     Args:
         frame: 16-byte DATA frame
@@ -85,17 +85,18 @@ def parse_data(frame: bytes, timestamp: datetime) -> DataMessage:
     Returns:
         DataMessage with extracted fields
     """
-    # Extract uint16 little-endian fields
+    # Distance is uint16 little-endian
     distance_raw = struct.unpack_from("<H", frame, 6)[0]
-    motor_pulses = struct.unpack_from("<H", frame, 10)[0]
+    # Steps (actual footstep counter) is uint16 big-endian
+    steps = struct.unpack_from(">H", frame, 10)[0]
 
     return DataMessage(
         timestamp=timestamp,
         flag=frame[3],
-        steps=frame[4],
+        belt_cadence=frame[4],
         distance_raw=distance_raw,
         belt_revs=frame[8],
-        motor_pulses=motor_pulses,
+        steps=steps,
         speed=frame[12],
         belt_state=frame[13],
         raw_hex=frame.hex(),

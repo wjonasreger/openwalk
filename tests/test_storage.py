@@ -39,13 +39,13 @@ def make_data_message(**overrides: object) -> DataMessage:
     defaults = {
         "timestamp": datetime(2026, 2, 17, 10, 0, 0),
         "flag": 0,
-        "steps": 42,
+        "belt_cadence": 16,
         "distance_raw": 150,
-        "belt_revs": 16,
-        "motor_pulses": 1234,
+        "belt_revs": 6,
+        "steps": 42,
         "speed": 10,
         "belt_state": 1,
-        "raw_hex": "5b0d0500002a0096001004d20a0100005d",
+        "raw_hex": "5b0d0500100096000600002a0a01005d",
     }
     defaults.update(overrides)
     return DataMessage(**defaults)  # type: ignore[arg-type]

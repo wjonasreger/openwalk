@@ -31,71 +31,92 @@ async def run_app(debug: bool = False) -> None:
         debug: Enable debug logging.
     """
     if debug:
-        logging.basicConfig(level=logging.DEBUG, format="%(name)s: %(message)s")
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="%(asctime)s %(name)s: %(message)s",
+            filename="/tmp/openwalk_debug.log",
+            filemode="w",
+        )
     else:
         logging.basicConfig(level=logging.WARNING)
 
+    # Install signal handler early so no KeyboardInterrupt can sneak in
+    loop = asyncio.get_running_loop()
+    stop_event = asyncio.Event()
+
+    def _handle_signal() -> None:
+        logger.debug("Signal received, setting stop_event")
+        stop_event.set()
+
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(sig, _handle_signal)
+
     console = Console()
-    console.print("[bold cyan]OpenWalk[/bold cyan] starting...\n")
 
-    async with Database() as db:
-        session_mgr = SessionManager(db)
-        sample_mgr = SampleManager(db)
+    try:
+        async with Database() as db:
+            session_mgr = SessionManager(db)
+            sample_mgr = SampleManager(db)
 
-        # Recover any interrupted sessions from a previous run
-        await session_mgr.recover_interrupted()
+            # Recover any interrupted sessions from a previous run
+            await session_mgr.recover_interrupted()
 
-        # Load config and create user profile
-        config = load_config()
-        profile = config_to_profile(config)
+            # Load config and create user profile
+            config = load_config()
+            profile = config_to_profile(config)
 
-        orchestrator = SessionOrchestrator(session_mgr, sample_mgr, profile)
+            display = config.get("display", {})
+            sparkline_minutes = int(display.get("sparkline_minutes", 15))
 
-        # Create connection manager wired to orchestrator callbacks
-        conn_mgr = ConnectionManager(
-            on_data=orchestrator.handle_raw_data,
-            on_state_change=orchestrator.handle_state_change,
-        )
+            orchestrator = SessionOrchestrator(
+                session_mgr, sample_mgr, profile,
+                sparkline_minutes=sparkline_minutes,
+            )
 
-        # Start BLE connection as background task
-        await conn_mgr.start_background()
+            # Create connection manager wired to orchestrator callbacks
+            conn_mgr = ConnectionManager(
+                on_data=orchestrator.handle_raw_data,
+                on_state_change=orchestrator.handle_state_change,
+            )
 
-        # Start DB queue processor as background task
-        db_task = asyncio.create_task(orchestrator.process_db_queue())
+            # Start BLE connection as background task
+            await conn_mgr.start_background()
 
-        try:
-            await _display_loop(console, orchestrator, conn_mgr)
-        finally:
-            # Graceful shutdown
-            console.print("\n[dim]Shutting down...[/dim]")
+            # Start DB queue processor as background task
+            db_task = asyncio.create_task(orchestrator.process_db_queue())
 
-            if orchestrator.state.session_id is not None:
-                await orchestrator.end_session()
+            try:
+                await _display_loop(console, orchestrator, conn_mgr, stop_event)
+            finally:
+                # Graceful shutdown
+                console.print("\n[dim]Shutting down...[/dim]")
 
-            orchestrator.stop()
-            await conn_mgr.stop()
-            db_task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await db_task
+                if orchestrator.state.session_id is not None:
+                    await orchestrator.end_session()
+
+                orchestrator.stop()
+                await conn_mgr.stop()
+                db_task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await db_task
+    finally:
+        # Remove signal handlers
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            loop.remove_signal_handler(sig)
 
 
 async def _display_loop(
     console: Console,
     orchestrator: SessionOrchestrator,
     conn_mgr: ConnectionManager,
+    stop_event: asyncio.Event,
 ) -> None:
     """Run the Rich Live display loop with keyboard handling."""
-    keyboard_task = asyncio.create_task(_keyboard_handler(orchestrator, conn_mgr))
+    keyboard_task = asyncio.create_task(
+        _keyboard_handler(orchestrator, conn_mgr, stop_event)
+    )
 
-    # Install signal handler for clean Ctrl+C
-    loop = asyncio.get_running_loop()
-    stop_event = asyncio.Event()
-
-    def _handle_signal() -> None:
-        stop_event.set()
-
-    for sig in (signal.SIGINT, signal.SIGTERM):
-        loop.add_signal_handler(sig, _handle_signal)
+    logger.debug("Entering Live display (stop_event.is_set=%s)", stop_event.is_set())
 
     try:
         with Live(
@@ -108,12 +129,18 @@ async def _display_loop(
             console=console,
             refresh_per_second=2,
             screen=True,
+            redirect_stdout=True,
+            redirect_stderr=True,
         ) as live:
+            logger.debug("Live display entered, starting loop")
             while not stop_event.is_set():
                 await asyncio.sleep(0.5)
 
                 # Check session inactivity
                 await orchestrator.check_inactivity()
+
+                # Record current step rate so sparkline reflects decay to 0
+                orchestrator.record_tick()
 
                 # Update display
                 live.update(
@@ -124,22 +151,24 @@ async def _display_loop(
                         conn_mgr.router.total_notifications,
                     )
                 )
+            logger.debug("Display loop exited: stop_event was set")
+    except asyncio.CancelledError:
+        logger.debug("Display loop cancelled")
+    except Exception:
+        logger.exception("Display loop error")
     finally:
         keyboard_task.cancel()
         with contextlib.suppress(asyncio.CancelledError):
             await keyboard_task
 
-        # Remove signal handlers
-        for sig in (signal.SIGINT, signal.SIGTERM):
-            loop.remove_signal_handler(sig)
-
 
 async def _keyboard_handler(
     orchestrator: SessionOrchestrator,
     conn_mgr: ConnectionManager,
+    stop_event: asyncio.Event,
 ) -> None:
     """Handle keyboard input in a background task."""
-    while True:
+    while not stop_event.is_set():
         try:
             key = await read_key()
         except asyncio.CancelledError:
@@ -147,9 +176,12 @@ async def _keyboard_handler(
         except Exception:
             continue
 
-        if key == "q":
-            # Signal the display loop to stop
-            raise asyncio.CancelledError
+        if not key:
+            continue
+        elif key == "q":
+            logger.debug("Quit key pressed")
+            stop_event.set()
+            return
         elif key == "r":
             logger.info("Manual reconnect requested")
             await conn_mgr.stop()

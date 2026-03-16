@@ -70,15 +70,15 @@ FRAME_END = 0x5D  # ASCII ']'
 DATA_BYTE_START = 0  # 0x5B
 DATA_BYTE_LENGTH = 1  # 0x0D (13)
 DATA_BYTE_TYPE = 2  # 0x05
-DATA_BYTE_FLAG = 3  # 0-4, cycles during session
-DATA_BYTE_STEPS = 4  # uint8, wraps at 255
+DATA_BYTE_FLAG = 3  # 0-7, cycles during session
+DATA_BYTE_BELT_CADENCE = 4  # uint8, belt-derived cadence (~2.55:1 to belt_revs)
 DATA_BYTE_RESERVED1 = 5  # always 0x00
 DATA_BYTE_DIST_LO = 6  # uint16 LE low byte
 DATA_BYTE_DIST_HI = 7  # uint16 LE high byte
 DATA_BYTE_BELT_REVS = 8  # uint8, wraps at 255
 DATA_BYTE_RESERVED2 = 9  # always 0x00
-DATA_BYTE_MOTOR_LO = 10  # uint16 LE low byte
-DATA_BYTE_MOTOR_HI = 11  # uint16 LE high byte
+DATA_BYTE_STEPS_HI = 10  # uint16 BE high byte — actual footstep counter
+DATA_BYTE_STEPS_LO = 11  # uint16 BE low byte — actual footstep counter
 DATA_BYTE_SPEED = 12  # 1-20 setting
 DATA_BYTE_BELT_STATE = 13  # 1 = running
 DATA_BYTE_PADDING = 14  # always 0x00
@@ -93,7 +93,13 @@ SPEED_MAX = 20
 
 # Wrap-around detection threshold for uint8 counters
 # If current < previous AND previous > this threshold, wrap occurred
-WRAP_THRESHOLD = 200
+WRAP_THRESHOLD_UINT8 = 200
+
+# Wrap-around detection threshold for uint16 step counter
+WRAP_THRESHOLD_UINT16 = 60000
 
 # Maximum value for uint8 counter before wrap
 UINT8_MAX = 255
+
+# Maximum value for uint16 counter before wrap
+UINT16_MAX = 65535

@@ -161,13 +161,13 @@ class TestExportJson:
         msg = DataMessage(
             timestamp=datetime.now(),
             flag=0,
-            steps=10,
+            belt_cadence=25,
             distance_raw=50,
             belt_revs=4,
-            motor_pulses=100,
+            steps=10,
             speed=10,
             belt_state=1,
-            raw_hex="5b0d050a003200040064000a01005d",
+            raw_hex="5b0d051900320004000a000a01005d",
         )
         await sample_mgr.insert_sample(sid, msg, cumulative_steps=10)
 

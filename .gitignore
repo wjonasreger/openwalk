@@ -210,6 +210,9 @@ __marimo__/
 .build/
 .swiftpm/
 
+# Trial data (raw BLE captures)
+scripts/trial_data/*.jsonl
+
 # Other
 notes/
 .local/

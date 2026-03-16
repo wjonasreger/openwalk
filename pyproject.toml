@@ -4,14 +4,13 @@ version = "1.0.0"
 description = "macOS terminal app for the InMovement Unsit treadmill. Captures walking sessions via BLE and tracks steps, distance, and calories in real-time."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
 authors = [{ name = "W. Jonas Reger" }]
 keywords = ["treadmill", "ble", "bluetooth", "fitness", "walking"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: End Users/Desktop",
-    "License :: OSI Approved :: Apache Software License",
     "Operating System :: MacOS",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -28,6 +27,10 @@ dependencies = [
 [project.scripts]
 openwalk = "openwalk.cli.main:cli"
 
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
 [dependency-groups]
 dev = [
     "black>=26.1.0",
@@ -37,6 +40,9 @@ dev = [
     "pytest-cov>=7.0.0",
     "ruff>=0.15.1",
 ]
+
+[tool.setuptools.packages.find]
+include = ["openwalk*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

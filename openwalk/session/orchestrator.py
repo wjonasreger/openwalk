@@ -44,6 +44,7 @@ class SessionOrchestrator:
         sample_mgr: SampleManager,
         profile: UserProfile,
         inactivity_timeout: float = DEFAULT_INACTIVITY_TIMEOUT,
+        sparkline_minutes: int = 15,
     ) -> None:
         self._session_mgr = session_mgr
         self._sample_mgr = sample_mgr
@@ -51,7 +52,7 @@ class SessionOrchestrator:
         self._inactivity_timeout = inactivity_timeout
 
         self._counters = SessionCounters()
-        self._state = LiveSessionState()
+        self._state = LiveSessionState(sparkline_minutes=sparkline_minutes)
         self._queue: asyncio.Queue[tuple[str, Any]] = asyncio.Queue()
 
         self._conn_state = ConnectionState.DISCONNECTED
@@ -76,10 +77,17 @@ class SessionOrchestrator:
         Parses raw BLE bytes, updates in-memory state, and queues DB writes.
         """
         now = datetime.now()
+        logger.debug("handle_raw_data: %d bytes, hex=%s", len(data), data.hex())
         messages = parse_notification(data, timestamp=now)
+        logger.debug("handle_raw_data: parsed %d messages", len(messages))
 
         for msg in messages:
+            logger.debug("handle_raw_data: msg type=%s", type(msg).__name__)
             if isinstance(msg, DataMessage):
+                logger.debug(
+                    "DataMessage: belt_state=%d speed=%d steps=%d belt_cadence=%d",
+                    msg.belt_state, msg.speed, msg.steps, msg.belt_cadence,
+                )
                 self._handle_data_message(msg, now)
             elif isinstance(msg, SpeedMessage):
                 self._state.speed = msg.speed
@@ -222,6 +230,24 @@ class SessionOrchestrator:
     async def recover_on_startup(self) -> None:
         """Recover interrupted sessions from a previous run."""
         await self._session_mgr.recover_interrupted()
+
+    def record_tick(self) -> None:
+        """Update display state and record sparkline history on each display tick.
+
+        When the treadmill stops sending DataMessages (user steps off),
+        this ensures speed/belt/calorie/step-rate all decay to 0 and
+        sparklines reflect the current state.
+        """
+        if self._state.session_id is None:
+            return
+
+        # Zero out live readings if no DataMessage recently
+        self._state.apply_staleness()
+
+        now = datetime.now()
+        self._state.speed_history.append((now, float(self._state.speed)))
+        self._state.step_rate_history.append((now, self._state.step_rate))
+        self._state.calorie_history.append((now, self._state.net_cal_per_min))
 
     def stop(self) -> None:
         """Signal the DB queue processor to stop."""

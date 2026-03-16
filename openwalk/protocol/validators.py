@@ -155,10 +155,9 @@ def validate_data_fields(frame: bytes) -> tuple[bool, str]:
     if frame[14] != 0x00:
         return False, f"Reserved byte 14 is 0x{frame[14]:02X}, expected 0x00"
 
-    # Check flag range (allowing some margin)
-    flag = frame[3]
-    if flag > 10:
-        return False, f"Flag value {flag} is outside expected range 0-4"
+    # Flag byte (byte 3) is not well understood — observed values 0-7 in early
+    # sessions, but higher values (e.g. 0x13) appear in other operating modes.
+    # Do not reject based on flag value.
 
     # Check speed range (allowing margin)
     speed = frame[12]
