@@ -86,7 +86,10 @@ class SessionOrchestrator:
             if isinstance(msg, DataMessage):
                 logger.debug(
                     "DataMessage: belt_state=%d speed=%d steps=%d belt_cadence=%d",
-                    msg.belt_state, msg.speed, msg.steps, msg.belt_cadence,
+                    msg.belt_state,
+                    msg.speed,
+                    msg.steps,
+                    msg.belt_cadence,
                 )
                 self._handle_data_message(msg, now)
             elif isinstance(msg, SpeedMessage):

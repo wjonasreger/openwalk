@@ -69,7 +69,9 @@ async def run_app(debug: bool = False) -> None:
             sparkline_minutes = int(display.get("sparkline_minutes", 15))
 
             orchestrator = SessionOrchestrator(
-                session_mgr, sample_mgr, profile,
+                session_mgr,
+                sample_mgr,
+                profile,
                 sparkline_minutes=sparkline_minutes,
             )
 
@@ -112,9 +114,7 @@ async def _display_loop(
     stop_event: asyncio.Event,
 ) -> None:
     """Run the Rich Live display loop with keyboard handling."""
-    keyboard_task = asyncio.create_task(
-        _keyboard_handler(orchestrator, conn_mgr, stop_event)
-    )
+    keyboard_task = asyncio.create_task(_keyboard_handler(orchestrator, conn_mgr, stop_event))
 
     logger.debug("Entering Live display (stop_event.is_set=%s)", stop_event.is_set())
 

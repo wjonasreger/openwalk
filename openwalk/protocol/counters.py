@@ -114,12 +114,8 @@ class SessionCounters:
 
     def __init__(self) -> None:
         """Initialize session counters."""
-        self.steps = CounterTracker(
-            max_value=UINT16_MAX, wrap_threshold=WRAP_THRESHOLD_UINT16
-        )
-        self.belt_revs = CounterTracker(
-            max_value=UINT8_MAX, wrap_threshold=WRAP_THRESHOLD_UINT8
-        )
+        self.steps = CounterTracker(max_value=UINT16_MAX, wrap_threshold=WRAP_THRESHOLD_UINT16)
+        self.belt_revs = CounterTracker(max_value=UINT8_MAX, wrap_threshold=WRAP_THRESHOLD_UINT8)
 
     def update_steps(self, raw_steps: int) -> int:
         """Update step counter and return cumulative total.
