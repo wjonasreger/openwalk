@@ -201,17 +201,22 @@ class TestSessionFinalization:
         self, sessions: SessionManager, samples: SampleManager
     ) -> None:
         session_id = await sessions.create_session()
-        msg = make_data_message(steps=100, distance_raw=250, speed=15, belt_state=1)
-        await samples.insert_sample(session_id, msg, cumulative_steps=100)
+        # Two samples to get a meaningful session delta
+        msg1 = make_data_message(steps=50, distance_raw=100, speed=15, belt_state=1)
+        msg2 = make_data_message(steps=150, distance_raw=350, speed=15, belt_state=1)
+        await samples.insert_sample(session_id, msg1, cumulative_steps=50)
+        await samples.insert_sample(session_id, msg2, cumulative_steps=150)
 
+        # Crash recovery path: compute totals from samples then finalize
+        await sessions.compute_totals_from_samples(session_id)
         await sessions.finalize_session(session_id)
 
         session = await sessions.get_session(session_id)
         assert session is not None
         assert session.state == SessionState.COMPLETED.value
         assert session.ended_at is not None
-        assert session.total_steps == 100
-        assert session.distance_raw == 250
+        assert session.total_steps == 100  # 150 - 50
+        assert session.distance_raw == 250  # 350 - 100
         assert session.distance_miles == pytest.approx(2.5)
         assert session.max_speed == 15
 
@@ -278,8 +283,10 @@ class TestSessionRecovery:
         self, sessions: SessionManager, samples: SampleManager
     ) -> None:
         session_id = await sessions.create_session()
-        msg = make_data_message(steps=75, distance_raw=200)
-        await samples.insert_sample(session_id, msg, cumulative_steps=75)
+        msg1 = make_data_message(steps=25, distance_raw=100)
+        msg2 = make_data_message(steps=100, distance_raw=300)
+        await samples.insert_sample(session_id, msg1, cumulative_steps=25)
+        await samples.insert_sample(session_id, msg2, cumulative_steps=100)
 
         recovered = await sessions.recover_interrupted()
         assert recovered == 1
@@ -287,7 +294,7 @@ class TestSessionRecovery:
         session = await sessions.get_session(session_id)
         assert session is not None
         assert session.state == SessionState.COMPLETED.value
-        assert session.total_steps == 75
+        assert session.total_steps == 75  # 100 - 25
 
     async def test_recover_deletes_empty(self, sessions: SessionManager) -> None:
         session_id = await sessions.create_session()

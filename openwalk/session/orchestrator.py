@@ -116,6 +116,17 @@ class SessionOrchestrator:
         s.last_data_at = now
         s.data_count += 1
 
+        # Track session baselines (first DataMessage sets the reference point)
+        if s._initial_steps is None:
+            s._initial_steps = cumulative_steps
+        if s._initial_distance_raw is None:
+            s._initial_distance_raw = msg.distance_raw
+
+        # Accumulate speed for running average (only while belt is running)
+        if msg.belt_state == 1 and msg.speed > 0:
+            s._speed_sum += msg.speed
+            s._speed_count += 1
+
         # Record step sample for sliding window rate calculation
         s.record_step_sample(now, cumulative_steps)
 
@@ -190,12 +201,12 @@ class SessionOrchestrator:
         if session_id is None:
             return
 
-        # Update totals before finalizing
+        # Update totals before finalizing (session-relative values)
         await self._session_mgr.update_totals(
             session_id,
-            total_steps=self._state.total_steps,
+            total_steps=self._state.session_steps,
             total_seconds=int(self._state.elapsed_seconds),
-            distance_raw=self._state.distance_raw,
+            distance_raw=self._state.session_distance_raw,
             distance_miles=self._state.distance_miles,
             calories=int(self._state.net_calories),
             max_speed=self._state.max_speed,

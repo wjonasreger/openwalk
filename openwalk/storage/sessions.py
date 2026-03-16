@@ -160,61 +160,85 @@ class SessionManager:
         )
 
     async def finalize_session(self, session_id: int) -> None:
-        """Finalize a RECORDING session: compute totals from last sample, transition to COMPLETED.
+        """Mark a RECORDING session as COMPLETED.
 
-        If the session has no samples, it is deleted instead.
+        Expects that update_totals() was already called by the orchestrator.
+        Only sets ended_at and state. Deletes empty sessions with no samples.
         """
-        # Get last sample for this session
         last_sample = await self.db.fetchone(
-            "SELECT * FROM samples WHERE session_id = ? ORDER BY captured_at DESC LIMIT 1",
+            "SELECT captured_at FROM samples"
+            " WHERE session_id = ? ORDER BY captured_at DESC LIMIT 1",
             (session_id,),
         )
 
         if last_sample is None:
-            # No data captured — discard empty session
             await self.db.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
             logger.info("Deleted empty session %d", session_id)
             return
 
-        # Compute aggregates from samples
+        await self.db.execute(
+            """\
+            UPDATE sessions
+            SET ended_at = ?, state = ?, updated_at = datetime('now')
+            WHERE id = ?
+            """,
+            (last_sample["captured_at"], SessionState.COMPLETED.value, session_id),
+        )
+        logger.info("Finalized session %d", session_id)
+
+    async def compute_totals_from_samples(self, session_id: int) -> None:
+        """Compute session totals from sample data (used for crash recovery).
+
+        Derives session-relative steps/distance from first and last samples.
+        """
         stats = await self.db.fetchone(
             """\
-            SELECT MAX(speed) as max_speed,
-                   AVG(CASE WHEN belt_state = 1 THEN speed END) as avg_speed
+            SELECT
+                MIN(steps) as first_steps,
+                MAX(steps) as last_steps,
+                MIN(distance_raw) as first_dist,
+                MAX(distance_raw) as last_dist,
+                MAX(speed) as max_speed,
+                AVG(CASE WHEN belt_state = 1 THEN speed END) as avg_speed,
+                MIN(captured_at) as first_at,
+                MAX(captured_at) as last_at
             FROM samples WHERE session_id = ?
             """,
             (session_id,),
         )
 
+        if stats is None or stats["first_at"] is None:
+            return
+
+        total_steps = (stats["last_steps"] or 0) - (stats["first_steps"] or 0)
+        distance_raw = (stats["last_dist"] or 0) - (stats["first_dist"] or 0)
+
+        first_at = datetime.fromisoformat(stats["first_at"])
+        last_at = datetime.fromisoformat(stats["last_at"])
+        total_seconds = int((last_at - first_at).total_seconds())
+
+        avg_speed_raw = stats["avg_speed"] or 0
+        avg_speed_mph = round(avg_speed_raw / 10.0, 2)
+
         await self.db.execute(
             """\
             UPDATE sessions
-            SET ended_at = ?,
-                total_steps = ?,
-                total_seconds = ?,
-                distance_raw = ?,
-                distance_miles = ?,
-                calories = ?,
-                max_speed = ?,
-                avg_speed = ?,
-                state = ?,
+            SET total_steps = ?, total_seconds = ?, distance_raw = ?,
+                distance_miles = ?, max_speed = ?, avg_speed = ?,
                 updated_at = datetime('now')
             WHERE id = ?
             """,
             (
-                last_sample["captured_at"],
-                last_sample["steps"],
-                last_sample["elapsed_seconds"],
-                last_sample["distance_raw"],
-                (last_sample["distance_raw"] or 0) / 100.0,
-                last_sample["calories_raw"],
-                stats["max_speed"] if stats else None,
-                stats["avg_speed"] if stats else None,
-                SessionState.COMPLETED.value,
+                total_steps,
+                total_seconds,
+                distance_raw,
+                distance_raw / 100.0,
+                stats["max_speed"],
+                avg_speed_mph,
                 session_id,
             ),
         )
-        logger.info("Finalized session %d", session_id)
+        logger.info("Computed totals from samples for session %d", session_id)
 
     async def transition_state(
         self,
@@ -274,6 +298,7 @@ class SessionManager:
             count = sample_count["cnt"] if sample_count else 0
 
             if count > 0:
+                await self.compute_totals_from_samples(session.id)
                 await self.finalize_session(session.id)
                 logger.warning("Recovered interrupted session %d (%d samples)", session.id, count)
                 recovered += 1

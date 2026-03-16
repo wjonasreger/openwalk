@@ -62,7 +62,7 @@ def render_metrics_table(state: LiveSessionState) -> Table:
         style="bold green" if state.is_belt_running else "bold yellow",
     )
 
-    table.add_row("Steps:", f"{state.total_steps:,}", "Speed:", f"{state.speed}/20")
+    table.add_row("Steps:", f"{state.session_steps:,}", "Speed:", f"{state.speed}/20")
     table.add_row("Time:", state.elapsed_formatted, "Belt:", belt_text)
     table.add_row(
         "Distance:", f"{state.distance_miles:.2f} mi", "Pace:", f"~{state.speed_mph:.1f} mph"

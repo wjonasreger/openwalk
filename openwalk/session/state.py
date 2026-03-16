@@ -44,6 +44,10 @@ class LiveSessionState:
     belt_state: int = 0
     last_data_at: datetime | None = None
 
+    # Session baselines (set on first DataMessage of session)
+    _initial_steps: int | None = field(default=None, repr=False)
+    _initial_distance_raw: int | None = field(default=None, repr=False)
+
     # Calorie accumulation
     gross_calories: float = 0.0
     net_calories: float = 0.0
@@ -98,8 +102,22 @@ class LiveSessionState:
         return f"{minutes:02d}:{seconds:02d}"
 
     @property
+    def session_steps(self) -> int:
+        """Steps relative to session start."""
+        if self._initial_steps is None:
+            return 0
+        return self.total_steps - self._initial_steps
+
+    @property
+    def session_distance_raw(self) -> int:
+        """Distance raw value relative to session start."""
+        if self._initial_distance_raw is None:
+            return 0
+        return self.distance_raw - self._initial_distance_raw
+
+    @property
     def distance_miles(self) -> float:
-        return self.distance_raw / 100.0
+        return self.session_distance_raw / 100.0
 
     @property
     def speed_mph(self) -> float:
@@ -111,11 +129,10 @@ class LiveSessionState:
 
     @property
     def avg_speed_mph(self) -> float:
-        """Average speed in mph computed from distance and elapsed time."""
-        elapsed_hrs = self.elapsed_seconds / 3600.0
-        if elapsed_hrs > 0:
-            return self.distance_miles / elapsed_hrs
-        return 0.0
+        """Average speed in mph from speed readings while belt was running."""
+        if self._speed_count == 0:
+            return 0.0
+        return (self._speed_sum / self._speed_count) / 10.0
 
     @property
     def step_rate(self) -> float:
@@ -162,6 +179,10 @@ class LiveSessionState:
 
     _current_gross_rate: float = field(default=0.0, repr=False)
     _current_net_rate: float = field(default=0.0, repr=False)
+
+    # Running average speed (raw speed units, only while belt running)
+    _speed_sum: float = field(default=0.0, repr=False)
+    _speed_count: int = field(default=0, repr=False)
 
     @property
     def is_data_stale(self) -> bool:
@@ -250,3 +271,7 @@ class LiveSessionState:
         self._prev_cumulative_steps = 0
         self._current_gross_rate = 0.0
         self._current_net_rate = 0.0
+        self._initial_steps = None
+        self._initial_distance_raw = None
+        self._speed_sum = 0.0
+        self._speed_count = 0

@@ -278,6 +278,7 @@ class TestLiveSessionState:
 
     def test_distance_miles(self):
         s = LiveSessionState()
+        s._initial_distance_raw = 0
         s.distance_raw = 142
         assert abs(s.distance_miles - 1.42) < 0.01
 
@@ -355,11 +356,10 @@ class TestLiveSessionState:
 
     def test_avg_speed_mph_calculation(self):
         s = LiveSessionState()
-        s.started_at = datetime.now() - timedelta(hours=1)
-        s.last_data_at = datetime.now()
-        s.distance_raw = 100  # 1.0 miles
-        # 1.0 miles in 1 hour = 1.0 mph
-        assert abs(s.avg_speed_mph - 1.0) < 0.05
+        # Simulate speed samples: raw speed 10 = 1.0 mph
+        s._speed_sum = 30  # 3 samples of speed=10
+        s._speed_count = 3
+        assert abs(s.avg_speed_mph - 1.0) < 0.01
 
     def test_reset(self):
         s = LiveSessionState()
